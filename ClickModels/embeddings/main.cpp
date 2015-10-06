@@ -18,13 +18,13 @@ void learn(MyLearner* learner, const vector<size_t>& users0,
 
 void Learn(MyLearner& learner)
 {
-
+    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
     vector<size_t> users0, users1, labels;
     size_t user0, user1, label;
     size_t N = 1;
     for (size_t j = 0; j < N; ++j)
     {
-        ifstream in("/tmp/pairs");
+        ifstream in(out_directory + "data_stat/pairs_26");
         clock_t start = clock();
         size_t enumerator = 0;
         while (true)
@@ -49,7 +49,7 @@ void Learn(MyLearner& learner)
             size_t numThreads = 7;
             for (size_t i = 0; i < numThreads; ++i)
             {
-                std::thread t(&learn, &learner, std::ref(users0), std::ref(users1), std::ref(labels), i, numThreads, 1.0 - 0.5 * j);
+                std::thread t(&learn, &learner, std::ref(users0), std::ref(users1), std::ref(labels), i, numThreads, 0.1);
                 threads.push_back(std::move(t));
             }
             for (size_t i = 0; i < numThreads; ++i)
@@ -71,11 +71,12 @@ void Learn(MyLearner& learner)
 
 void PreparePairs()
 {
-    ofstream out("/tmp/pairs");
-    uumap queryUser("/tmp/query_user_1_25");
-    uumap userUrl("/tmp/user_url_1_25");
-    uumap queryRank("/tmp/query_rank_1_25");
-    DayData dayData = read_day("/home/stepan/Anna/big_data/days/26.txt");
+    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+    ofstream out(out_directory + "data_stat/pairs_27");
+    uumap queryUser(out_directory + "query_user_1_25");
+    uumap userUrl(out_directory + "user_url_1_25");
+    uumap queryRank(out_directory + "query_rank_1_25");
+    DayData dayData = read_day(out_directory + "data_by_days/27.txt");
 
     size_t numPlus = 0;
     size_t numMinus = 0;
@@ -127,6 +128,7 @@ void PreparePairs()
             }
             if (!found) continue;
             const unordered_map<size_t, vector<double> >& users = queryUser.watch(query);
+
             size_t enumerator = 0;
             size_t divisor = users.size() / 100;
             for (auto& item : users)
@@ -138,11 +140,24 @@ void PreparePairs()
 //                        continue;
 //                    }
 //                }
+                size_t similarUserUrl = -1;
                 size_t similarUser = item.first;
                 if (item.second.size() == 0) continue;
-                const vector<double>& urls = userUrl.watch(similarUser, url);
+                bool found = false;
+                for (size_t i = 0; i < 10; ++i)
+                {
+                    const vector<double>& urls = userUrl.watch(similarUser, history.urls[i]);
+                    if (urls.size() > 0)
+                    {
+                        found = true;
+                        similarUserUrl = i;
+                        break;
+                    }
+                }
+                if (!found) continue;
+
                 if (user == similarUser) continue;
-                if (urls.size() > 0) {
+                if (history.type[similarUserUrl] == 2) {
                     out << user << " " << similarUser << " " << 1 << "\n";
                     ++numPlus;
                 } else {
@@ -158,16 +173,19 @@ void PreparePairs()
 
 void Test(MyLearner& learner)
 {
-    uumap queryUser("/tmp/query_user_1_25");
-    uumap userUrl("/tmp/user_url_1_25");
-    uumap queryRank("/tmp/query_rank_1_25");
-    DayData dayData = read_day("/home/stepan/Anna/big_data/days/27.txt");
+    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+    uumap queryUser(out_directory + "query_user_1_25");
+    uumap userUrl(out_directory + "user_url_1_25");
+    uumap queryRank(out_directory + "query_rank_1_25");
+    DayData dayData = read_day(out_directory + "data_by_days/27.txt");
 
     size_t enumerator = 0;
     size_t numPlus = 0;
     size_t numMinus = 0;
     size_t stupidNumPlus = 0;
     size_t stupidNumMinus = 0;
+    double distanceMinus = 0;
+    double distancePlus = 0;
     clock_t start = clock();
     //bool shouldStop = false;
     for(const auto& item0 : dayData)
@@ -181,7 +199,8 @@ void Test(MyLearner& learner)
                 double elapsedTime = (double)(clock() - start) / CLOCKS_PER_SEC;
                 std::cout << elapsedTime << ": " << enumerator << " "
                           << stupidNumPlus << " " << stupidNumMinus << " " << (double)stupidNumPlus / (stupidNumPlus + stupidNumMinus) << "; "
-                          << numPlus << " " << numMinus << " " << (double)numPlus / (numPlus + numMinus) << std::endl;
+                          << numPlus << " " << numMinus << " " << (double)numPlus / (numPlus + numMinus)
+                          << " DISTANCE " << distancePlus/numPlus << " " << distanceMinus/numMinus <<std::endl;
                 //shouldStop = true;
                 //break;
             }
@@ -234,8 +253,10 @@ void Test(MyLearner& learner)
             size_t nearestUser = nearest[0].first;
             const vector<double>& urls = userUrl.watch(nearestUser, url);
             if (urls.size() > 0) {
+                distancePlus += learner.Distance(nearestUser, user);
                 ++numPlus;
             } else {
+                distanceMinus += learner.Distance(nearestUser, user);
                 ++numMinus;
             }
 
@@ -257,10 +278,11 @@ void Test(MyLearner& learner)
 
 void Test1(MyLearner& learner)
 {
-    uumap queryUser("/tmp/query_user");
-    uumap userUrl("/tmp/user_url");
-    uumap queryRank("/tmp/query_rank");
-    DayData dayData = read_day("/home/stepan/Anna/big_data/days/27.txt");
+    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+    uumap queryUser(out_directory + "query_user_1_25");
+    uumap userUrl(out_directory + "user_url_1_25");
+    uumap queryRank(out_directory + "query_rank_1_25");
+    DayData dayData = read_day(out_directory + "data_by_days/27.txt");
 
     size_t enumerator = 0;
     size_t numPlus = 0;
@@ -397,15 +419,71 @@ void Test1(MyLearner& learner)
 
 }
 
+void GetHistogramm(MyLearner& learner)
+{
+    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+    ofstream out(out_directory + "data_stat/histogramm_27");
+    vector<size_t> users0, users1, labels;
+    vector<pair<double, size_t>> distances;
+    size_t user0, user1, label;
+    size_t N = 1;
+    for (size_t j = 0; j < N; ++j)
+    {
+        ifstream in(out_directory + "data_stat/pairs_27");
+        clock_t start = clock();
+        size_t enumerator = 0;
+        while (true)
+        {
+            /*users0.clear();
+            users1.clear();
+            labels.clear();
+            distances.clear();*/
+            while(!in.eof())
+            {
+                in >> user0 >> user1 >> label;
+                users0.push_back(user0);
+                users1.push_back(user1);
+                labels.push_back(label);
+                distances.push_back(pair<double, size_t>(learner.Distance(user0, user1), enumerator));
+                if (++enumerator % 50000000 == 0)
+                {
+                    double elapsedTime = (double)(clock() - start) / CLOCKS_PER_SEC;
+                    std::cout << elapsedTime << ": " << enumerator << std::endl;
+                    break;
+                }
+            }
+            if (in.eof())
+            {
+                break;
+            }
+        }
+        std::cout << "Closing file..." << std::endl;
+        in.close();
+    }
+    std::sort(distances.begin(), distances.end(), [](const pair<double,size_t>& x, const pair<double,size_t>& y)
+    {
+        return x.first < y.first;
+    });
+    for (size_t i = 0; i < distances.size(); ++i)
+    {
+        //std::cout << distances[i].second << "\n";
+        out << users0[distances[i].second] << " " << users1[distances[i].second] << " "
+                                           << distances[i].first << " " << labels[distances[i].second] << "\n";
+    }
+//    std::cout << "Printing to file..." << std::endl;
+//    learner.Print("/tmp/embedding");
+}
 
 int main()
 {
-   PreparePairs();
+   //PreparePairs();
    std::function<double(double)> probFunctor = [](double x) -> double { return std::exp(-x); };
    std::function<double(double)> divLogFunctor = [](double x) -> double { return -1; };
-   MyLearner learner("/home/stepan/Anna/big_data/users", probFunctor, divLogFunctor, 90);
+   MyLearner learner("/Users/annasepliaraskaia/Desktop/work/kaggle_yandex/big_data/users", probFunctor, divLogFunctor, 90);
    Learn(learner);
-   Test1(learner);
+   GetHistogramm(learner);
+   //Test(learner);
+
 }
 
 

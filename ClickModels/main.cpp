@@ -129,14 +129,13 @@ void TryTester()
 int main() 
 {
     std::cout << "click-models: main.cpp is running..." << std::endl;
-// 1.
-//    start = clock();
-//    SeparateByDays("/home/stepan/Anna/big_data/trainW2V", "/home/stepan/Anna/big_data/days/");
-//    end = clock();
-//    std::cout << double(end - start) /  CLOCKS_PER_SEC << std::endl;
-
+/* 1.
+    auto start = clock();
+    separate_by_day("/Users/annasepliaraskaia/Desktop/work/kaggle_yandex/big_data/trainW2V", "/Users/annasepliaraskaia/Desktop/work/data_by_days/");
+    auto end = clock();
+    std::cout << double(end - start) /  CLOCKS_PER_SEC << std::endl;*/
 // 2.
-    calculate_counters("/home/stepan/Anna/big_data/days/", 1, 25);
+    calculate_counters("/Users/annasepliaraskaia/Desktop/work/data_by_days/", 1, 25);
 
 // 3.
 //    TryTester<Strategy0>();

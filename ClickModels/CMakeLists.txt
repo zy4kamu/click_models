@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 2.8)
 project(yandex_cpp)
 
-set(CMAKE_CXX_COMPILER /usr/bin/g++-4.8)
+#set(CMAKE_CXX_COMPILER /usr/bin/g++-4.8)
 SET(CMAKE_EXE_LINKER_FLAGS "-pthread")
 
 if (${CMAKE_BUILD_TYPE} MATCHES DEBUG)
     MESSAGE("Building DEBUG version: -O0 is used")
-    add_compile_options(-O0 -m64 -pthread -std=c++0x -fopenmp -ggdb3)
+    add_compile_options(-O0 -m64 -pthread -std=c++0x -ggdb3)
 else()
     MESSAGE("Building RELEASE version: -Ofast is used")
-    add_compile_options(-Ofast -m64 -std=c++11 -pthread -fopenmp)
+    add_compile_options(-Ofast -m64 -std=c++11 -pthread)
 endif()
 
 
@@ -36,9 +36,9 @@ file(GLOB headers
 add_library(click-models STATIC ${sources} ${headers} ${sourceheaders})
 
 add_executable(click-models-app main.cpp)
-target_link_libraries(click-models-app LINK_PUBLIC pthread gomp click-models tools csvManager)
+target_link_libraries(click-models-app LINK_PUBLIC pthread click-models tools csvManager)
 
 add_executable(embeddings-app embeddings/main.cpp)
-target_link_libraries(embeddings-app LINK_PUBLIC pthread gomp click-models tools csvManager)
+target_link_libraries(embeddings-app LINK_PUBLIC pthread click-models tools csvManager)
 
 

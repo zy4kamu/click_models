@@ -23,11 +23,11 @@ void Counters::clear()
 void Counters::save(size_t start_day, size_t finish_day)
 {
     string postfix = "_" + std::to_string(start_day) + "_" + std::to_string(finish_day);
-    query_url.save("/tmp/query_url" + postfix);
-    user_url.save("/tmp/user_url" + postfix);
-    user_rank.save("/tmp/user_rank" + postfix);
-    query_user.save("/tmp/query_user" + postfix);
-    query_rank.save("/tmp/query_rank" + postfix);
+    query_url.save("/Users/annasepliaraskaia/Desktop/work/query_url" + postfix);
+    user_url.save("/Users/annasepliaraskaia/Desktop/work/user_url" + postfix);
+    user_rank.save("/Users/annasepliaraskaia/Desktop/work/user_rank" + postfix);
+    query_user.save("/Users/annasepliaraskaia/Desktop/work/query_user" + postfix);
+    query_rank.save("/Users/annasepliaraskaia/Desktop/work/query_rank" + postfix);
 }
 
 void calculate_counters(const DayData& data)

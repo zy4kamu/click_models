@@ -28,7 +28,6 @@
 #include "Containers/Document.h"
 #include "Containers/SparseVector.h"
 #include "Containers/TypeTraits.h"
-#include "Containers/Trie.h"
 
 #include "Exceptions.h"
 
