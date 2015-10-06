@@ -1,5 +1,7 @@
 #include "MyLearner.h"
 #include "day_data.h"
+#include "FileReader.h"
+#include "FileWriter.h"
 #include <ctime>
 
 void learn(MyLearner* learner, const vector<size_t>& users0,
@@ -21,10 +23,14 @@ void Learn(MyLearner& learner)
     string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
     vector<size_t> users0, users1, labels;
     size_t user0, user1, label;
-    size_t N = 1;
+    size_t N = 20;
     for (size_t j = 0; j < N; ++j)
     {
+<<<<<<< HEAD
         ifstream in(out_directory + "data_stat/pairs_26");
+=======
+        ifstream in("/tmp/permuted_pairs");
+>>>>>>> ccfc70de6198495a38ea408591f30de794b32820
         clock_t start = clock();
         size_t enumerator = 0;
         while (true)
@@ -49,7 +55,11 @@ void Learn(MyLearner& learner)
             size_t numThreads = 7;
             for (size_t i = 0; i < numThreads; ++i)
             {
+<<<<<<< HEAD
                 std::thread t(&learn, &learner, std::ref(users0), std::ref(users1), std::ref(labels), i, numThreads, 0.1);
+=======
+                std::thread t(&learn, &learner, std::ref(users0), std::ref(users1), std::ref(labels), i, numThreads, 0.1 * (1.0 - (double)j * 1.0 / double(N)));
+>>>>>>> ccfc70de6198495a38ea408591f30de794b32820
                 threads.push_back(std::move(t));
             }
             for (size_t i = 0; i < numThreads; ++i)
@@ -171,6 +181,26 @@ void PreparePairs()
     out.close();
 }
 
+void RandomPermutationOfPairs(const string& fileIn, const string& fileOut)
+{
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> uniformDistribution(0, 1);
+    vector<string> lines;
+    FileManager::Read(fileIn, &lines);
+    vector<std::pair<size_t, double> > pairs;
+    for (size_t i = 0; i < lines.size(); ++i)
+    {
+        pairs.emplace_back(i, uniformDistribution(generator));
+    }
+    std::sort(pairs.begin(), pairs.end(), [](const std::pair<size_t, double>& x, const std::pair<size_t, double>& y) { return x.second < y.second; });
+    vector<string> permuted;
+    for (size_t i = 0; i < lines.size(); ++i)
+    {
+        permuted.emplace_back(lines[pairs[i].first]);
+    }
+    FileManager::Write(fileOut, permuted);
+}
+
 void Test(MyLearner& learner)
 {
     string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
@@ -187,6 +217,10 @@ void Test(MyLearner& learner)
     double distanceMinus = 0;
     double distancePlus = 0;
     clock_t start = clock();
+
+    double mean_distance_minus = 0.;
+    double mean_distance_plus = 0.;
+
     //bool shouldStop = false;
     for(const auto& item0 : dayData)
     {
@@ -199,8 +233,13 @@ void Test(MyLearner& learner)
                 double elapsedTime = (double)(clock() - start) / CLOCKS_PER_SEC;
                 std::cout << elapsedTime << ": " << enumerator << " "
                           << stupidNumPlus << " " << stupidNumMinus << " " << (double)stupidNumPlus / (stupidNumPlus + stupidNumMinus) << "; "
+<<<<<<< HEAD
                           << numPlus << " " << numMinus << " " << (double)numPlus / (numPlus + numMinus)
                           << " DISTANCE " << distancePlus/numPlus << " " << distanceMinus/numMinus <<std::endl;
+=======
+                          << numPlus << " " << numMinus << " " << (double)numPlus / (numMinus + numPlus) << " "
+                          "DISTANCE = " << mean_distance_minus/numMinus << " " << mean_distance_plus/numPlus << std::endl;
+>>>>>>> ccfc70de6198495a38ea408591f30de794b32820
                 //shouldStop = true;
                 //break;
             }
@@ -239,6 +278,9 @@ void Test(MyLearner& learner)
                 }
             }
             if (!found) continue;
+
+            if (queryUser.watch(query).size() < 1000) continue;
+
             const unordered_map<size_t, vector<double> >& users_map = queryUser.watch(query);
             unordered_set<size_t> users;
             for (auto& item : users_map)
@@ -255,9 +297,11 @@ void Test(MyLearner& learner)
             if (urls.size() > 0) {
                 distancePlus += learner.Distance(nearestUser, user);
                 ++numPlus;
+                mean_distance_plus += learner.Distance(nearestUser, user);
             } else {
                 distanceMinus += learner.Distance(nearestUser, user);
                 ++numMinus;
+                 mean_distance_minus += learner.Distance(nearestUser, user);
             }
 
             auto zz = users.begin();
@@ -278,11 +322,18 @@ void Test(MyLearner& learner)
 
 void Test1(MyLearner& learner)
 {
+<<<<<<< HEAD
     string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
     uumap queryUser(out_directory + "query_user_1_25");
     uumap userUrl(out_directory + "user_url_1_25");
     uumap queryRank(out_directory + "query_rank_1_25");
     DayData dayData = read_day(out_directory + "data_by_days/27.txt");
+=======
+    uumap queryUser("/tmp/query_user_1_25");
+    uumap userUrl("/tmp/user_url_1_25");
+    uumap queryRank("/tmp/query_rank_1_25");
+    DayData dayData = read_day("/home/stepan/Anna/big_data/days/27.txt");
+>>>>>>> ccfc70de6198495a38ea408591f30de794b32820
 
     size_t enumerator = 0;
     size_t numPlus = 0;
@@ -329,7 +380,7 @@ void Test1(MyLearner& learner)
             }
             if (should_break) continue;
 
-            if (queryUser.watch(query).size() < 10) continue;
+            if (queryUser.watch(query).size() < 1000) continue;
 
             bool found = false;
             for (size_t i = 0; i < 10; ++i)
@@ -350,7 +401,9 @@ void Test1(MyLearner& learner)
             }
 
             // New
+
             vector<double> evristics(10, 0);
+
             for (size_t nearestUser : users)
             {
                 const unordered_map<size_t, vector<double> >& nearestUserUrls = userUrl.watch(nearestUser);
@@ -366,10 +419,10 @@ void Test1(MyLearner& learner)
                     }
                 }
                 if (clickedBestRank + 1 != 0)
-                    evristics[clickedBestRank] += 1.; // / learner.Distance(nearestUser, user);
+                        evristics[clickedBestRank] -= std::log(1.0 - std::exp(-learner.Distance(user, nearestUser)));
             }
             size_t clickedBestRank = 0;
-            double maxEvristics = 0;
+            double maxEvristics = -1000000;
             for (size_t i = 0; i < 10; ++i)
             {
                 if (evristics[i] > maxEvristics)
@@ -389,7 +442,7 @@ void Test1(MyLearner& learner)
 
             const unordered_map<size_t, vector<double> >& nearestUserUrls = userUrl.watch(nearestUser);
             size_t clickedBestRank = 0;
-            for (size_t i = 0; i < 2; ++i)
+            for (size_t i = 0; i < 3; ++i)
             {
                 size_t url = history.urls[i];
                 auto found = nearestUserUrls.find(url);
@@ -476,14 +529,24 @@ void GetHistogramm(MyLearner& learner)
 
 int main()
 {
+<<<<<<< HEAD
    //PreparePairs();
+=======
+//   PreparePairs();
+//   RandomPermutationOfPairs("/tmp/pairs", "/tmp/permuted_pairs");
+>>>>>>> ccfc70de6198495a38ea408591f30de794b32820
    std::function<double(double)> probFunctor = [](double x) -> double { return std::exp(-x); };
    std::function<double(double)> divLogFunctor = [](double x) -> double { return -1; };
    MyLearner learner("/Users/annasepliaraskaia/Desktop/work/kaggle_yandex/big_data/users", probFunctor, divLogFunctor, 90);
    Learn(learner);
+<<<<<<< HEAD
    GetHistogramm(learner);
    //Test(learner);
 
+=======
+//   Test(learner);
+   Test1(learner);
+>>>>>>> ccfc70de6198495a38ea408591f30de794b32820
 }
 
 
