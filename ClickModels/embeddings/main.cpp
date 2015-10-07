@@ -4,6 +4,8 @@
 #include "FileWriter.h"
 #include <ctime>
 
+void GetHistogramm(MyLearner& learner, int iteration_number);
+
 void learn(MyLearner* learner, const vector<size_t>& users0,
     const vector<size_t>& users1, const vector<size_t>& labels, size_t coreIndex, size_t numCores, double rate)
 {
@@ -20,17 +22,13 @@ void learn(MyLearner* learner, const vector<size_t>& users0,
 
 void Learn(MyLearner& learner)
 {
-    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+    string out_directory = "/tmp/";
     vector<size_t> users0, users1, labels;
     size_t user0, user1, label;
     size_t N = 20;
     for (size_t j = 0; j < N; ++j)
     {
-<<<<<<< HEAD
-        ifstream in(out_directory + "data_stat/pairs_26");
-=======
-        ifstream in("/tmp/permuted_pairs");
->>>>>>> ccfc70de6198495a38ea408591f30de794b32820
+        ifstream in(out_directory + "pairs_26");
         clock_t start = clock();
         size_t enumerator = 0;
         while (true)
@@ -55,11 +53,7 @@ void Learn(MyLearner& learner)
             size_t numThreads = 7;
             for (size_t i = 0; i < numThreads; ++i)
             {
-<<<<<<< HEAD
-                std::thread t(&learn, &learner, std::ref(users0), std::ref(users1), std::ref(labels), i, numThreads, 0.1);
-=======
-                std::thread t(&learn, &learner, std::ref(users0), std::ref(users1), std::ref(labels), i, numThreads, 0.1 * (1.0 - (double)j * 1.0 / double(N)));
->>>>>>> ccfc70de6198495a38ea408591f30de794b32820
+                std::thread t(&learn, &learner, std::ref(users0), std::ref(users1), std::ref(labels), i, numThreads, 0.01);
                 threads.push_back(std::move(t));
             }
             for (size_t i = 0; i < numThreads; ++i)
@@ -71,6 +65,8 @@ void Learn(MyLearner& learner)
                 break;
             }
             std::cout << "Joined threads..." << std::endl;
+            GetHistogramm(learner, j);
+
         }
         std::cout << "Closing file..." << std::endl;
         in.close();
@@ -81,12 +77,12 @@ void Learn(MyLearner& learner)
 
 void PreparePairs()
 {
-    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
-    ofstream out(out_directory + "data_stat/pairs_27");
+    string out_directory = "/tmp/";
+    ofstream out(out_directory + "/pairs_26");
     uumap queryUser(out_directory + "query_user_1_25");
     uumap userUrl(out_directory + "user_url_1_25");
     uumap queryRank(out_directory + "query_rank_1_25");
-    DayData dayData = read_day(out_directory + "data_by_days/27.txt");
+    DayData dayData = read_day("/home/stepan/Anna/big_data/days/26.txt");
 
     size_t numPlus = 0;
     size_t numMinus = 0;
@@ -203,11 +199,11 @@ void RandomPermutationOfPairs(const string& fileIn, const string& fileOut)
 
 void Test(MyLearner& learner)
 {
-    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+    string out_directory = "/tmp/";
     uumap queryUser(out_directory + "query_user_1_25");
     uumap userUrl(out_directory + "user_url_1_25");
     uumap queryRank(out_directory + "query_rank_1_25");
-    DayData dayData = read_day(out_directory + "data_by_days/27.txt");
+    DayData dayData = read_day(out_directory + "days/27.txt");
 
     size_t enumerator = 0;
     size_t numPlus = 0;
@@ -233,13 +229,8 @@ void Test(MyLearner& learner)
                 double elapsedTime = (double)(clock() - start) / CLOCKS_PER_SEC;
                 std::cout << elapsedTime << ": " << enumerator << " "
                           << stupidNumPlus << " " << stupidNumMinus << " " << (double)stupidNumPlus / (stupidNumPlus + stupidNumMinus) << "; "
-<<<<<<< HEAD
                           << numPlus << " " << numMinus << " " << (double)numPlus / (numPlus + numMinus)
                           << " DISTANCE " << distancePlus/numPlus << " " << distanceMinus/numMinus <<std::endl;
-=======
-                          << numPlus << " " << numMinus << " " << (double)numPlus / (numMinus + numPlus) << " "
-                          "DISTANCE = " << mean_distance_minus/numMinus << " " << mean_distance_plus/numPlus << std::endl;
->>>>>>> ccfc70de6198495a38ea408591f30de794b32820
                 //shouldStop = true;
                 //break;
             }
@@ -322,18 +313,11 @@ void Test(MyLearner& learner)
 
 void Test1(MyLearner& learner)
 {
-<<<<<<< HEAD
-    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+    string out_directory = "tmp/";
     uumap queryUser(out_directory + "query_user_1_25");
     uumap userUrl(out_directory + "user_url_1_25");
     uumap queryRank(out_directory + "query_rank_1_25");
-    DayData dayData = read_day(out_directory + "data_by_days/27.txt");
-=======
-    uumap queryUser("/tmp/query_user_1_25");
-    uumap userUrl("/tmp/user_url_1_25");
-    uumap queryRank("/tmp/query_rank_1_25");
-    DayData dayData = read_day("/home/stepan/Anna/big_data/days/27.txt");
->>>>>>> ccfc70de6198495a38ea408591f30de794b32820
+    DayData dayData = read_day(out_directory + "days/27.txt");
 
     size_t enumerator = 0;
     size_t numPlus = 0;
@@ -472,10 +456,10 @@ void Test1(MyLearner& learner)
 
 }
 
-void GetHistogramm(MyLearner& learner)
+void GetHistogramm(MyLearner& learner, int iteration_number)
 {
-    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
-    ofstream out(out_directory + "data_stat/histogramm_27");
+    string out_directory = "/tmp/";
+    ofstream out(out_directory + "histogramm_27_" + std::to_string(iteration_number));
     vector<size_t> users0, users1, labels;
     vector<pair<double, size_t>> distances;
     size_t user0, user1, label;
@@ -529,24 +513,16 @@ void GetHistogramm(MyLearner& learner)
 
 int main()
 {
-<<<<<<< HEAD
-   //PreparePairs();
-=======
-//   PreparePairs();
-//   RandomPermutationOfPairs("/tmp/pairs", "/tmp/permuted_pairs");
->>>>>>> ccfc70de6198495a38ea408591f30de794b32820
+   PreparePairs();
+   //RandomPermutationOfPairs("/tmp/pairs", "/tmp/permuted_pairs");
    std::function<double(double)> probFunctor = [](double x) -> double { return std::exp(-x); };
    std::function<double(double)> divLogFunctor = [](double x) -> double { return -1; };
-   MyLearner learner("/Users/annasepliaraskaia/Desktop/work/kaggle_yandex/big_data/users", probFunctor, divLogFunctor, 90);
+   MyLearner learner("/home/stepan/Anna/big_data/users", probFunctor, divLogFunctor, 90);
    Learn(learner);
-<<<<<<< HEAD
-   GetHistogramm(learner);
+   //GetHistogramm(learner);
    //Test(learner);
 
-=======
-//   Test(learner);
-   Test1(learner);
->>>>>>> ccfc70de6198495a38ea408591f30de794b32820
+//   Test1(learner);
 }
 
 
