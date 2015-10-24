@@ -10,7 +10,7 @@
 
 
 Embedding::Embedding(const string& file, size_t dimension)
-    : embedding(embedding)
+    : dimension(dimension)
 {
     this->readEmbedding(file + ".embedding");
     FileManager::Read(file + ".map", &this->tokenToIndex);

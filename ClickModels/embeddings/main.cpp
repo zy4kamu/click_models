@@ -5,9 +5,12 @@
 #include "pairspreperation.h"
 #include "embbedingbydays.h"
 #include "personalizedclickmodel.h"
+#include "Embedding.h"
 #include <ctime>
 
 //void GetHistogramm(MyLearner& learner, int step);
+
+string out_directory = "/home/stepan/click_models_data/";
 
 
 void RandomPermutationOfPairs(const string& fileIn, const string& fileOut)
@@ -323,20 +326,149 @@ void Test1(MyLearner& learner,int day)
 
 }
 
+void Test2()
+{
+    std::cout << "reading embedding ..." << std::endl;
+    Embedding embedding(out_directory + "auxiliary/model", 90);
+    std::cout << "have read embedding ..." << std::endl;
+    uumap queryUser(out_directory + "counters/query_user_1_25");
+    uumap userUrl(out_directory + "counters/user_url_1_25");
+    uumap queryRank(out_directory + "counters/query_rank_1_25");
+    DayData dayData = read_day(out_directory + "data_by_days/27.txt");
+
+    size_t enumerator = 0;
+    size_t numPlus = 0;
+    size_t numMinus = 0;
+    size_t numBasicPlus = 0;
+    size_t numBasicMinus = 0;
+    size_t numOnFirst = 0;
+    size_t numNOotOnFirst = 0;
+    clock_t start = clock();
+    for(const auto& item0 : dayData)
+    {
+        for (const auto& item1 : item0.second)
+        {
+            const Query& history = item1.second;
+            if (++enumerator % 10000 == 0) {
+                double elapsedTime = (double)(clock() - start) / CLOCKS_PER_SEC;
+                std::cout << elapsedTime << ": " << enumerator << " " << "BASIC "
+                          << numBasicPlus << " " << numBasicMinus << " " << (double)numBasicPlus / (numBasicPlus + numBasicMinus)
+                          << " EMBEDDING " <<numPlus << " " << numMinus << " " << (double)numPlus / (numPlus + numMinus) << ";"
+                          << numOnFirst << " " << numNOotOnFirst << endl;
+            }
+            // get query, person and clicked url
+            size_t query = history.id;
+            size_t user = history.person;
+            size_t url = -1;
+
+            // first evristic skip data (if first rank is twice more than second then skip)
+            const vector<double>& rank0 = queryRank.watch(query, 0);
+            const vector<double>& rank1 = queryRank.watch(query, 1);
+            if (rank0.size() > 0 && (rank1.size() == 0 || rank0[0] >= 2 * rank1[0]))
+            {
+                continue;
+            }
+
+            // second evristic skip data (skip urls which this user has already seen)
+            bool should_break = false;
+            for (size_t i = 0; i < 10; ++i)
+            {
+                const vector<double>& found = userUrl.watch(user, history.urls[i]);
+                if (found.size() > 0 && found[0] > 1 - 1e-5)
+                {
+                    should_break = true;
+                    break;
+                }
+            }
+            if (should_break) continue;
+
+            // skip seldom queries
+            if (queryUser.watch(query).size() <  10) continue;
+
+            // skip serps where there were not deep click
+            bool found = false;
+            for (size_t i = 0; i < 10; ++i)
+            {
+                if(history.type[i] == 2)
+                {
+                    found = true;
+                    url = history.urls[i];
+                    break;
+                }
+            }
+            if (!found) continue;
+
+            // get users which inserted this query
+            const unordered_map<size_t, vector<double> >& users_map = queryUser.watch(query);
+            unordered_set<size_t> users;
+            for (auto& item : users_map)
+            {
+                users.insert(item.first);
+            }
+
+            // get nearest user
+            int clickedBestRank = -1;
+            vector<std::pair<size_t, double> > nearest = embedding.GetNearest(user, 1, users);
+            size_t nearestUser1 = nearest[0].first;
+
+            // predict best rank by nearest users
+            const unordered_map<size_t, vector<double> >& nearestUserUrls = userUrl.watch(nearestUser1);
+            for (size_t i = 0; i < 2; ++i)
+            {
+                size_t url = history.urls[i];
+                auto found = nearestUserUrls.find(url);
+                if (found != nearestUserUrls.end() && found->second.size() > 0)
+                {
+                    clickedBestRank = i;
+                    break;
+                }
+            }
+            if (clickedBestRank < 0)
+            {
+                clickedBestRank = 0;
+            }
+
+            // calculate statistics
+            if (history.type[clickedBestRank] == 2) {
+                ++numPlus;
+            } else {
+                ++numMinus;
+            }
+            if (clickedBestRank == 0) numOnFirst++;
+            else ++numNOotOnFirst;
+
+            if (history.type[0] == 2) {
+                ++numBasicPlus;
+            } else {
+                ++numBasicMinus;
+            }
+        }
+    }
+    std::cout << "LAST RESULT " << enumerator << " " << "BASIC "
+              << numBasicPlus << " " << numBasicMinus << " " << (double)numBasicPlus / (numBasicPlus + numBasicMinus)
+              << " EMBEDDING " <<numPlus << " " << numMinus << " " << (double)numPlus / (numPlus + numMinus) << ";"
+              << numOnFirst << " " << numNOotOnFirst << endl;
+
+    std::cout << "Ready!!!" << std::endl;
+}
+
 int main()
 {
-   // prepare pairs
-   string out_directory = "/home/stepan/click_models_data/";
-   uumap queryUser(out_directory + "counters/query_user_1_25");
-   uumap userUrl(out_directory + "counters/user_url_1_25");
-   uumap queryRank(out_directory + "counters/query_rank_1_25");
-   DayData dayData = read_day(out_directory + "data_by_days/26.txt");
-   PreparePairs(out_directory + "auxiliary/pairs", queryUser, userUrl, queryRank, dayData);
+    // prepare pairs
+    // uumap queryUser(out_directory + "counters/query_user_1_25");
+    // uumap userUrl(out_directory + "counters/user_url_1_25");
+    // uumap queryRank(out_directory + "counters/query_rank_1_25");
+    // DayData dayData = read_day(out_directory + "data_by_days/26.txt");
+    // PreparePairs(out_directory + "auxiliary/pairs", queryUser, userUrl, queryRank, dayData);
 
-   std::function<double(double)> probFunctor = [](double x) -> double { return std::exp(-x/5.); };
-   std::function<double(double)> divLogFunctor = [](double x) -> double { return -0.2; };
-   MyLearner learner(out_directory + "users", probFunctor, divLogFunctor, 90);
-   Learn(learner, out_directory);
+    // learn
+//    std::function<double(double)> probFunctor = [](double x) -> double { return std::exp(-x/5.); };
+//    std::function<double(double)> divLogFunctor = [](double x) -> double { return -0.2; };
+//    MyLearner learner(out_directory + "users", probFunctor, divLogFunctor, 90);
+//    Learn(learner, out_directory);
+
+    Test2();
+
 
    //std::cout << "Run my learner\n";
    //MyLearner learner(out_directory + "embedding/alpha_0_2_20");
@@ -360,105 +492,3 @@ int main()
    p.Learn(0.1);
    p.Test();*/
 }
-
-
-//void Learn()
-//{
-//    std::function<double(double)> probFunctor = [](double x) -> double { return std::exp(-x); };
-//    std::function<double(double)> divLogFunctor = [](double x) -> double { return -1; };
-//    MyLearner learner("/home/stepan/Anna/big_data/users", probFunctor, divLogFunctor, 100);
-
-//    uumap queryUser("/tmp/query_user");
-//    uumap userUrl("/tmp/user_url");
-//    DayData dayData = read_day("/home/stepan/Anna/big_data/days/27.txt");
-
-//    size_t numPlus = 0;
-//    size_t numMinus = 0;
-//    size_t enumerator = 0;
-//    clock_t start = clock();
-//    //bool shouldStop = false;
-//    for (size_t j = 0; j < 7; ++j)
-//    {
-//        for(const auto& item0 : dayData)
-//        {
-//            //if (shouldStop) break;
-//            for (const auto& item1 : item0.second)
-//            {
-//                const Query& history = item1.second;
-//                if (++enumerator % 10000 == 0)
-//                {
-//                    //shouldStop = true;
-//                    //break;
-//                    double elapsedTime = (double)(clock() - start) / CLOCKS_PER_SEC;
-//                    std::cout << elapsedTime << ": " << enumerator << " " << numPlus << " " << numMinus << " " << (double)numPlus / (numPlus + numMinus) << std::endl;
-//                }
-//                // get query, person and clicked url
-//                size_t query = history.id;
-//                size_t user = history.person;
-//                size_t url = -1;
-//                bool found = false;
-//                for (size_t i = 0; i < 10; ++i)
-//                {
-//                    if(history.type[i] == 2)
-//                    {
-//                        found = true;
-//                        url = history.urls[i];
-//                        break;
-//                    }
-//                }
-//                if (!found) continue;
-//                const unordered_map<size_t, vector<double> >& users = queryUser.watch(query);
-//                for (auto& item : users)
-//                {
-//                    size_t similarUser = item.first;
-//                    if (item.second.size() == 0) continue;
-//                    const vector<double>& urls = userUrl.watch(similarUser, url);
-//                    if (user == similarUser) continue;
-//                    if (urls.size() > 0) {
-//                        learner.MakeOnePositiveStep(user, similarUser, 1);
-//                        ++numPlus;
-//                    } else {
-//                        learner.MakeOneNegativeStep(user, similarUser, 1);
-//                        ++numMinus;
-//                    }
-//                }
-//            }
-//        }
-//    }
-//    std::cout << "Printing to file..." << std::endl;
-//    learner.Print("/tmp/embedding");
-//    std::cout << "Ready!!!" << std::endl;
-//}
-
-//void SeparateByLines()
-//{
-//    size_t size = 1000;
-//    size_t numCores = 7;
-//    size_t numPerCore = size / numCores;
-//    ifstream in("/tmp/embedding");
-//    size_t user0, user1, label;
-//    size_t enumerator = 0;
-//    clock_t start = clock();
-//    vector<ofstream*> outs;
-//    for (size_t i = 0; i < numCores; ++i)
-//    {
-//        ofstream out("/tmp/pairs" + std::to_string(i));
-//        outs.push_back(&out);
-//    }
-//    while(!in.eof())
-//    {
-//        in >> user0 >> user1 >> label;
-//        if (++enumerator % 10000 == 0)
-//        {
-//            double elapsedTime = (double)(clock() - start) / CLOCKS_PER_SEC;
-//            std::cout << elapsedTime << ": " << enumerator << std::endl;
-//        }
-//        size_t index = enumerator / numPerCore;
-//        outs[index] << user0 << " " << user1 << " " << label << "\n";
-//    }
-//    in.close();
-//    for (size_t i = 0; i < numCores; ++i)
-//    {
-//        outs[i].close();
-//    }
-//}
