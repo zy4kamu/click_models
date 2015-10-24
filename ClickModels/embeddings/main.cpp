@@ -7,6 +7,7 @@
 #include "personalizedclickmodel.h"
 #include "Embedding.h"
 #include <ctime>
+#include <ctime>
 
 //void GetHistogramm(MyLearner& learner, int step);
 
@@ -328,13 +329,20 @@ void Test1(MyLearner& learner,int day)
 
 void Test2()
 {
+    clock_t start = clock();
     std::cout << "reading embedding ..." << std::endl;
     Embedding embedding(out_directory + "auxiliary/model", 90);
-    std::cout << "have read embedding ..." << std::endl;
+    std::cout << "have read embedding for " << double(clock() - start) / CLOCKS_PER_SEC << " seconds ..." << std::endl;
+
+    start = clock();
     uumap queryUser(out_directory + "counters/query_user_1_25");
     uumap userUrl(out_directory + "counters/user_url_1_25");
     uumap queryRank(out_directory + "counters/query_rank_1_25");
+    std::cout << "have read counters for " << double(clock() - start) / CLOCKS_PER_SEC << " seconds ..." << std::endl;
+
+    start = clock();
     DayData dayData = read_day(out_directory + "data_by_days/27.txt");
+    std::cout << "have read day data for " << double(clock() - start) / CLOCKS_PER_SEC << " seconds ..." << std::endl;
 
     size_t enumerator = 0;
     size_t numPlus = 0;
@@ -343,7 +351,6 @@ void Test2()
     size_t numBasicMinus = 0;
     size_t numOnFirst = 0;
     size_t numNOotOnFirst = 0;
-    clock_t start = clock();
     for(const auto& item0 : dayData)
     {
         for (const auto& item1 : item0.second)
@@ -408,26 +415,38 @@ void Test2()
 
             // get nearest user
             int clickedBestRank = -1;
-            vector<std::pair<size_t, double> > nearest = embedding.GetNearest(user, 1, users);
-            size_t nearestUser1 = nearest[0].first;
-
-            // predict best rank by nearest users
-            const unordered_map<size_t, vector<double> >& nearestUserUrls = userUrl.watch(nearestUser1);
-            for (size_t i = 0; i < 2; ++i)
+            vector<std::pair<size_t, double> > nearest = embedding.GetNearest(user, users.size(), users);
+            if (nearest.size() < 200) continue;
+            vector<double> evristic(10,0);
+            // predict best rank by nearest users by summ
+            for (auto nearestUser : nearest)
             {
-                size_t url = history.urls[i];
-                auto found = nearestUserUrls.find(url);
-                if (found != nearestUserUrls.end() && found->second.size() > 0)
+                const unordered_map<size_t, vector<double> >& nearestUserUrls = userUrl.watch(nearestUser.first);
+                for (size_t i = 0; i < 10; ++i)
                 {
-                    clickedBestRank = i;
-                    break;
+                    size_t url = history.urls[i];
+                    auto found = nearestUserUrls.find(url);
+                    if (found != nearestUserUrls.end() && found->second.size() > 0)
+                    {
+                        clickedBestRank = i;
+                        break;
+                    }
+                }
+                if (clickedBestRank >= 0)
+                {
+                    evristic[clickedBestRank] += 1;
                 }
             }
-            if (clickedBestRank < 0)
+            clickedBestRank = 0;
+            double max_click = evristic[0];
+            for (int i = 0; i < 10; ++i)
             {
-                clickedBestRank = 0;
+                if (max_click < evristic[i])
+                {
+                    clickedBestRank = i;
+                    max_click = evristic[i];
+                }
             }
-
             // calculate statistics
             if (history.type[clickedBestRank] == 2) {
                 ++numPlus;
