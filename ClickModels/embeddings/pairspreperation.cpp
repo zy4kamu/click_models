@@ -103,17 +103,11 @@ const vector<LearningExample>& PairsPreperation::get_pairs() const
     return pairs;
 }
 */
-void PreparePairs(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, DayData& dayData)
+void PreparePairs(const string& outFile, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, DayData& dayData)
 {
 
     std::cout << "Run Prepare Pairs" << endl;
-    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
-    ofstream out(out_directory + "data_stat/pairs");
-    /*uumap queryUser(out_directory + "query_user_1_25");
-    uumap userUrl(out_directory + "user_url_1_25");
-    uumap queryRank(out_directory + "query_rank_1_25");
-    DayData dayData = read_day(out_directory + "data_by_days/" + std::to_string(day) + ".txt");*/
-
+    ofstream out(outFile);
     size_t numPlus = 0;
     size_t numMinus = 0;
     size_t enumerator = 0;
@@ -421,9 +415,8 @@ void learn(MyLearner* learner, const vector<size_t>& users0,
     }
 }
 
-void Learn(MyLearner& learner, int day)
+void Learn(MyLearner& learner, const string& outDirectory, int day)
 {
-    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
     /*DayData dayData26 = read_day(out_directory + "data_by_days/26.txt");
     DayData dayData27 = read_day(out_directory + "data_by_days/27.txt");
     uumap queryUser(out_directory + "query_user_1_25");
@@ -435,8 +428,7 @@ void Learn(MyLearner& learner, int day)
     for (size_t j = 0; j < N; ++j)
     {
         std::cout << "Step number = " << j << std::endl;
-        //PreparePairs(queryUser, userUrl,  queryRank, dayData26);
-        ifstream in(out_directory + "data_stat/pairs");
+        ifstream in(outDirectory + "auxiliary/pairs");
 
         clock_t start = clock();
         size_t enumerator = 0;
@@ -479,9 +471,7 @@ void Learn(MyLearner& learner, int day)
         }
         std::cout << "Closing file..." << std::endl;
         in.close();
-        //PreparePairs(queryUser, userUrl,  queryRank, dayData27);
-        //GetGeneralHistogramm(learner, 1000 + j);
     }
-//    std::cout << "Printing to file..." << std::endl;
-    //learner.Print("/Users/annasepliaraskaia/Desktop/work/embedding/alpha_0_2_20");
+    std::cout << "Printing to file..." << std::endl;
+    learner.Print(outDirectory + "auxiliary/model");
 }

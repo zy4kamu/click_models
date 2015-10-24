@@ -325,27 +325,31 @@ void Test1(MyLearner& learner,int day)
 
 int main()
 {
-   string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
-   uumap queryUser(out_directory + "query_user_1_25");
-   uumap userUrl(out_directory + "user_url_1_25");
-   uumap queryRank(out_directory + "query_rank_1_25");
+   // prepare pairs
+   string out_directory = "/home/stepan/click_models_data/";
+   uumap queryUser(out_directory + "counters/query_user_1_25");
+   uumap userUrl(out_directory + "counters/user_url_1_25");
+   uumap queryRank(out_directory + "counters/query_rank_1_25");
    DayData dayData = read_day(out_directory + "data_by_days/26.txt");
-   PreparePairs(queryUser, userUrl, queryRank, dayData);
+   PreparePairs(out_directory + "auxiliary/pairs", queryUser, userUrl, queryRank, dayData);
+
    std::function<double(double)> probFunctor = [](double x) -> double { return std::exp(-x/5.); };
    std::function<double(double)> divLogFunctor = [](double x) -> double { return -0.2; };
-   MyLearner learner("/Users/annasepliaraskaia/Desktop/work/kaggle_yandex/big_data/users", probFunctor, divLogFunctor, 90);
-   std::cout << "Run my learner\n";
+   MyLearner learner(out_directory + "users", probFunctor, divLogFunctor, 90);
+   Learn(learner, out_directory);
+
+   //std::cout << "Run my learner\n";
    //MyLearner learner(out_directory + "embedding/alpha_0_2_20");
-   Learn(learner);
-   DayData dayData27 = read_day(out_directory + "data_by_days/27.txt");
-   PreparePairs(queryUser, userUrl, queryRank, dayData27);
+   //Learn(learner);
+   //DayData dayData27 = read_day(out_directory + "data_by_days/27.txt");
+   //PreparePairs(queryUser, userUrl, queryRank, dayData27);
    //GetGeneralHistogramm(learner, 1000);
-   GetHistogramm(learner,100);
+   //GetHistogramm(learner,100);
    //GetHistogramm(learner, 1000);
    //std::map<double, double> histogramm = GetHistogramm(out_directory + "data_stat/histogramms/histogramm_0");
    //histogramm[100000000] = 0.2;
    //Test(learner);
-    Test1(learner, 25);
+   //Test1(learner, 25);
 
    /*EmbbedingByDays embedding("/Users/annasepliaraskaia/Desktop/work/kaggle_yandex/big_data/users",
                              probFunctor, divLogFunctor);

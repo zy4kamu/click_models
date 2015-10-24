@@ -17,9 +17,9 @@ std::map<double, double> GetHistogramm(MyLearner& learner, int day);
 std::map<double, double> GetHistogramm(const std::string& his_file);
 std::map<double, double> GetGeneralHistogramm(MyLearner& learner, int day);
 
-void PreparePairs(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, DayData& dayData);
+void PreparePairs(const string& outFile, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, DayData& dayData);
 
-void Learn(MyLearner& learner, int day = 0);
+void Learn(MyLearner& learner, const string& folder, int day = 0);
 
 
 /*class PairsPreperation

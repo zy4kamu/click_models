@@ -19,9 +19,10 @@ EmbbedingByDays::EmbbedingByDays(const string& usersFile,
 void EmbbedingByDays::OneLearningStep(const string& pathToDayData, int day)
 {
     DayData dayData = read_day(pathToDayData);
-    PreparePairs(counters.query_user, counters.user_url, counters.query_rank, dayData);
+    const string outFile = "/tmp/xxx";
+    PreparePairs(outFile, counters.query_user, counters.user_url, counters.query_rank, dayData);
    // GetHistogramm(learner, day);
-    Learn(learner, day);
+    //Learn(learner, day);
     calculate_counters(dayData, counters);
 }
 
@@ -49,7 +50,8 @@ void EmbbedingByDays::RunLearn(int end_day)
             std::cout << "Get day " << i << endl;
             OneLearningStep(out_directory + std::to_string(i) + ".txt", i);
         }
-        PreparePairs(counters.query_user, counters.user_url, counters.query_rank, dayData);
+        const string outFile = "/tmp/xxx";
+        PreparePairs(outFile, counters.query_user, counters.user_url, counters.query_rank, dayData);
         //GetHistogramm(learner, j);
     }
     learner.Print("/Users/annasepliaraskaia/Desktop/work/embedding/1");

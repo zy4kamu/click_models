@@ -131,12 +131,12 @@ int main()
     std::cout << "click-models: main.cpp is running..." << std::endl;
     const string dataFolder = "/home/stepan/click_models_data/";
 // 1.
-    auto start = clock();
-    separate_by_day(dataFolder + "trainW2V", dataFolder + "data_by_days/");
-    auto end = clock();
-    std::cout << double(end - start) /  CLOCKS_PER_SEC << std::endl;
+//    auto start = clock();
+//    separate_by_day(dataFolder + "trainW2V", dataFolder + "data_by_days/");
+//    auto end = clock();
+//    std::cout << double(end - start) /  CLOCKS_PER_SEC << std::endl;
 // 2.
-//    calculate_counters("/Users/annasepliaraskaia/Desktop/work/data_by_days/", 1, 26);
+    calculate_counters(dataFolder + "data_by_days/", 1, 25);
 
 // 3.
 //    TryTester<Strategy0>();
