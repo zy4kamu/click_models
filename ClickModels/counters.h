@@ -18,6 +18,7 @@ struct Counters
 
 extern Counters counters;
 
+void calculate_counters(const DayData& data, Counters& counters1);
 void calculate_counters(const string& folder, size_t start_day, size_t finish_day);
 
 #endif

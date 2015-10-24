@@ -31,21 +31,21 @@ void Counters::save(size_t start_day, size_t finish_day)
     query_rank.save(out_directory + "query_rank" + postfix);
 }
 
-void calculate_counters(const DayData& data)
+void calculate_counters(const DayData& data, Counters& counters1)
 {
     for(const auto& item0 : data)
     {
         for (const auto& item1 : item0.second)
         {
             const Query& query = item1.second;
-            counters.query_user.get(query.id, query.person, 1)[0] += 1;
+            counters1.query_user.get(query.id, query.person, 1)[0] += 1;
 
             for (size_t i = 0; i <= query.type.size(); ++i)
             {
                 if (query.type[i] == 2)
                 {
-                    counters.user_url.get(query.person, query.urls[i], 1)[0] += 1;
-                    counters.query_rank.get(query.id, i, 1)[0] += 1;
+                    counters1.user_url.get(query.person, query.urls[i], 1)[0] += 1;
+                    counters1.query_rank.get(query.id, i, 1)[0] += 1;
                 }
             }
 
@@ -61,7 +61,7 @@ void calculate_counters(const DayData& data)
             if (maxElem != 2) continue;
             for (size_t i = 0; i <= maxIndex; ++i)
             {
-                vector<double>& vec = counters.query_url.get(query.id, query.urls[i], 4);
+                vector<double>& vec = counters1.query_url.get(query.id, query.urls[i], 4);
                 vec[0] += 1;
                 if (query.type[i] == 2) {
                     vec[1] += 1;
@@ -76,7 +76,7 @@ void calculate_counters(const DayData& data)
 
             for (size_t i = 0; i <= maxIndex; ++i)
             {
-                vector<double>& vec = counters.user_rank.get(query.person, i, 4);
+                vector<double>& vec = counters1.user_rank.get(query.person, i, 4);
                 vec[0] += 1;
                 if (query.type[i] == 2) {
                     vec[1] += 1;
@@ -105,7 +105,7 @@ void calculate_counters(const string& folder, size_t start_day, size_t finish_da
         end = clock();
         std::cout << i << " reading: " << double(end - start) /  CLOCKS_PER_SEC << std::endl;
         start = clock();
-        calculate_counters(data);
+        calculate_counters(data, counters);
         end = clock();
         std::cout << i << " calculations: " << double(end - start) /  CLOCKS_PER_SEC << std::endl;
     }
