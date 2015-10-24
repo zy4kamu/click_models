@@ -62,29 +62,29 @@ MyLearner::MyLearner(
 //    }
 //}
 
-vector<std::pair<size_t, double> > MyLearner::GetNearest(size_t index, size_t number)
-{
-    typedef std::pair<double, size_t> Pair;
-    std::priority_queue<Pair, vector<Pair>, std::less<Pair> > queue;
-    Token& token = tokens[tokenToIndex[index]];
-    for (Token& pretendent : tokens)
-    {
-        double dist = Dist(token.embedding, pretendent.embedding);
-        if (queue.size() < number) {
-            queue.push(std::pair<double, size_t>(dist, pretendent.index));
-        } else if (dist < queue.top().first) {
-            queue.pop();
-            queue.push(std::pair<double, size_t>(dist, pretendent.index));
-        }
-    }
-    vector<std::pair<size_t, double> > nearest;
-    while(!queue.empty())
-    {
-        nearest.emplace_back(queue.top().second, queue.top().first);
-        queue.pop();
-    }
-    return nearest;
-}
+//vector<std::pair<size_t, double> > MyLearner::GetNearest(size_t index, size_t number)
+//{
+//    typedef std::pair<double, size_t> Pair;
+//    std::priority_queue<Pair, vector<Pair>, std::less<Pair> > queue;
+//    Token& token = tokens[tokenToIndex[index]];
+//    for (Token& pretendent : tokens)
+//    {
+//        double dist = Dist(token.embedding, pretendent.embedding);
+//        if (queue.size() < number) {
+//            queue.push(std::pair<double, size_t>(dist, pretendent.index));
+//        } else if (dist < queue.top().first) {
+//            queue.pop();
+//            queue.push(std::pair<double, size_t>(dist, pretendent.index));
+//        }
+//    }
+//    vector<std::pair<size_t, double> > nearest;
+//    while(!queue.empty())
+//    {
+//        nearest.emplace_back(queue.top().second, queue.top().first);
+//        queue.pop();
+//    }
+//    return nearest;
+//}
 
 double MyLearner::Distance(size_t first, size_t second)
 {

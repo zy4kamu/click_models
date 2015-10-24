@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <cmath>
+#include <queue>
 #include "FileReader.h"
 
 
@@ -59,4 +60,60 @@ double Embedding::Distance(size_t first, size_t second)
         distance += diff * diff;
     }
     return std::sqrt(distance);
+}
+
+vector<std::pair<size_t, double> > Embedding::GetNearest(size_t index, size_t number)
+{
+    typedef std::pair<double, size_t> Pair;
+    std::priority_queue<Pair, vector<Pair>, std::less<Pair> > queue;
+    for (const auto& kvp : this->tokenToIndex)
+    {
+        size_t pretendent = kvp.first;
+        if (pretendent == index)
+        {
+            continue;
+        }
+        double dist = this->Distance(pretendent, index);
+        if (queue.size() < number) {
+            queue.push(std::pair<double, size_t>(dist, pretendent));
+        } else if (dist < queue.top().first) {
+            queue.pop();
+            queue.push(std::pair<double, size_t>(dist, pretendent));
+        }
+    }
+    vector<std::pair<size_t, double> > nearest;
+    while(!queue.empty())
+    {
+        nearest.emplace_back(queue.top().second, queue.top().first);
+        queue.pop();
+    }
+    return nearest;
+}
+
+vector<std::pair<size_t, double> > Embedding::GetNearest(size_t index,
+    size_t number, const unordered_set<size_t>& userList)
+{
+    typedef std::pair<double, size_t> Pair;
+    std::priority_queue<Pair, vector<Pair>, std::less<Pair> > queue;
+    for (size_t pretendent : userList)
+    {
+        if (pretendent == index)
+        {
+            continue;
+        }
+        double dist = this->Distance(index, pretendent);
+        if (queue.size() < number) {
+            queue.push(std::pair<double, size_t>(dist, pretendent));
+        } else if (dist < queue.top().first) {
+            queue.pop();
+            queue.push(std::pair<double, size_t>(dist, pretendent));
+        }
+    }
+    vector<std::pair<size_t, double> > nearest;
+    while(!queue.empty())
+    {
+        nearest.emplace_back(queue.top().second, queue.top().first);
+        queue.pop();
+    }
+    return nearest;
 }
