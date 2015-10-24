@@ -47,20 +47,20 @@ MyLearner::MyLearner(
     }
 }
 
-MyLearner::MyLearner(const string& file)
-    : probFunctorCalculator([](double x) {return 0;}, 0, 1, 0.1)
-    , divLogFunctorCalculator([](double x) {return 0;}, 0, 1, 0.1)
-{
-    uumap uumap_data(file);
-    const unordered_map<size_t, vector<double> >& data = uumap_data.watch(0);
-    for (auto& item : data)
-    {
-        tokenToIndex[item.first] = tokens.size();
-        tokens.emplace_back();
-        tokens.back().index = item.first;
-        tokens.back().embedding = std::move(item.second);
-    }
-}
+//MyLearner::MyLearner(const string& file)
+//    : probFunctorCalculator([](double x) {return 0;}, 0, 1, 0.1)
+//    , divLogFunctorCalculator([](double x) {return 0;}, 0, 1, 0.1)
+//{
+//    uumap uumap_data(file);
+//    const unordered_map<size_t, vector<double> >& data = uumap_data.watch(0);
+//    for (auto& item : data)
+//    {
+//        tokenToIndex[item.first] = tokens.size();
+//        tokens.emplace_back();
+//        tokens.back().index = item.first;
+//        tokens.back().embedding = std::move(item.second);
+//    }
+//}
 
 vector<std::pair<size_t, double> > MyLearner::GetNearest(size_t index, size_t number)
 {
@@ -123,12 +123,20 @@ vector<std::pair<size_t, double> > MyLearner::GetNearest(size_t index,
 
 void MyLearner::Print(const string& file)
 {
-    uumap data;
-    for (auto& item : tokenToIndex)
+    vector<double> concatenated(this->dimension * this->tokens.size());
+    for (size_t i = 0; i < this->tokens.size(); ++i)
     {
-        data.get(size_t(0), size_t(item.first), 0) = tokens[item.second].embedding;
+        const vector<double>& emb = this->tokens[i].embedding;
+        size_t position = i * this->dimension;
+        for (size_t j = 0; j < dimension; ++j)
+        {
+            concatenated[position + j] = emb[j];
+        }
     }
-    data.save(file);
+    FILE* writer = fopen((file + ".embedding").c_str(), "wb");
+    fwrite(&(*concatenated.begin()), sizeof(double), concatenated.size(), writer);
+    fclose(writer);
+    FileManager::Write(file + ".map", this->tokenToIndex);
 }
 
 void MyLearner::MakeOnePositiveStep(size_t firstHash, size_t secondHash, double rate)

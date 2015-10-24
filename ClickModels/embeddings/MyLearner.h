@@ -16,7 +16,7 @@ public:
         std::function<double(double)> divLogFunctor,
         size_t dimension);
 
-    MyLearner(const string& file);
+    //MyLearner(const string& file);
     void Print(const string& file);
     vector<std::pair<size_t, double> > GetNearest(size_t token, size_t number);
     vector<std::pair<size_t, double> > GetNearest(size_t index,
