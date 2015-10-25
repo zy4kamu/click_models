@@ -331,7 +331,7 @@ void Test2()
 {
     clock_t start = clock();
     std::cout << "reading embedding ..." << std::endl;
-    Embedding embedding(out_directory + "auxiliary/model", 90);
+    Embedding embedding(out_directory + "auxiliary/model", 150);
     std::cout << "have read embedding for " << double(clock() - start) / CLOCKS_PER_SEC << " seconds ..." << std::endl;
 
     start = clock();
@@ -415,12 +415,13 @@ void Test2()
 
             // get nearest user
             int clickedBestRank = -1;
-            vector<std::pair<size_t, double> > nearest = embedding.GetNearest(user, users.size(), users);
-            if (nearest.size() < 200) continue;
+            vector<std::pair<size_t, double> > nearest = embedding.GetNearest(user, 300, users);
+            //if (nearest.size() < 100) continue;
             vector<double> evristic(10,0);
             // predict best rank by nearest users by summ
-            for (auto nearestUser : nearest)
+            for (size_t j = 0; j < std::min(size_t(300), nearest.size()); ++j)
             {
+                auto nearestUser = nearest[j];
                 const unordered_map<size_t, vector<double> >& nearestUserUrls = userUrl.watch(nearestUser.first);
                 for (size_t i = 0; i < 10; ++i)
                 {
@@ -474,39 +475,39 @@ void Test2()
 int main()
 {
     // prepare pairs
-    // uumap queryUser(out_directory + "counters/query_user_1_25");
-    // uumap userUrl(out_directory + "counters/user_url_1_25");
-    // uumap queryRank(out_directory + "counters/query_rank_1_25");
-    // DayData dayData = read_day(out_directory + "data_by_days/26.txt");
-    // PreparePairs(out_directory + "auxiliary/pairs", queryUser, userUrl, queryRank, dayData);
+//     uumap queryUser(out_directory + "counters/query_user_1_25");
+//     uumap userUrl(out_directory + "counters/user_url_1_25");
+//     uumap queryRank(out_directory + "counters/query_rank_1_25");
+//     DayData dayData = read_day(out_directory + "data_by_days/27.txt");
+//     PreparePairs(out_directory + "auxiliary/pairs_27", queryUser, userUrl, queryRank, dayData);
 
     // learn
 //    std::function<double(double)> probFunctor = [](double x) -> double { return std::exp(-x/5.); };
 //    std::function<double(double)> divLogFunctor = [](double x) -> double { return -0.2; };
-//    MyLearner learner(out_directory + "users", probFunctor, divLogFunctor, 90);
-//    Learn(learner, out_directory);
+//    MyLearner learner(out_directory + "users", probFunctor, divLogFunctor, 150);
+//    Learn(learner, out_directory, out_directory + "auxiliary/pairs");
 
-    Test2();
+//    Test2();
 
 
    //std::cout << "Run my learner\n";
-   //MyLearner learner(out_directory + "embedding/alpha_0_2_20");
+   Embedding embedding(out_directory + "auxiliary/10_iterations_0.1_step_150_dimension/model", 150);
    //Learn(learner);
    //DayData dayData27 = read_day(out_directory + "data_by_days/27.txt");
    //PreparePairs(queryUser, userUrl, queryRank, dayData27);
    //GetGeneralHistogramm(learner, 1000);
-   //GetHistogramm(learner,100);
+   GetHistogramm(out_directory + "auxiliary/histogram", out_directory + "auxiliary/pairs_27", embedding, 100);
    //GetHistogramm(learner, 1000);
    //std::map<double, double> histogramm = GetHistogramm(out_directory + "data_stat/histogramms/histogramm_0");
    //histogramm[100000000] = 0.2;
    //Test(learner);
    //Test1(learner, 25);
 
-   /*EmbbedingByDays embedding("/Users/annasepliaraskaia/Desktop/work/kaggle_yandex/big_data/users",
-                             probFunctor, divLogFunctor);
-   embedding.RunLearn(27);
+//   EmbbedingByDays embedding(out_directory + "users", out_directory + "auxiliary/pairs_del", out_directory + "auxiliary/embbiding_by_one_week",
+//                             out_directory + "data_by_days/", out_directory,
+//                             probFunctor, divLogFunctor);
+//   embedding.RunLearn(27);
 
-   Test1(embedding.getLearner(), 25);*/
    /*PersonalizedClickModel p = PersonalizedClickModel(10,11);
    p.Learn(0.1);
    p.Test();*/

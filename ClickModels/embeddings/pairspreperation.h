@@ -5,6 +5,7 @@
 #include "../day_data.h"
 #include "../counters.h"
 #include "MyLearner.h"
+#include "Embedding.h"
 
 /*struct LearningExample
 {
@@ -13,13 +14,13 @@
     int label;
     LearningExample(size_t us0, size_t us1, int l);
 };*/
-std::map<double, double> GetHistogramm(MyLearner& learner, int day);
+std::map<double, double> GetHistogramm(const string& outFile, const string& pairFile, Embedding& learner, int day);
 std::map<double, double> GetHistogramm(const std::string& his_file);
 std::map<double, double> GetGeneralHistogramm(MyLearner& learner, int day);
 
 void PreparePairs(const string& outFile, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, DayData& dayData);
 
-void Learn(MyLearner& learner, const string& folder, int day = 0);
+void Learn(MyLearner& learner, const string& outDirectory, const string& pairsfile, int day=0);
 
 
 /*class PairsPreperation

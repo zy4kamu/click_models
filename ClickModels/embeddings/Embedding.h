@@ -1,3 +1,6 @@
+#ifndef EMBEDDING
+#define EMBEDDING
+
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -24,3 +27,5 @@ private:
     vector<double> embedding;
     unordered_map<size_t, size_t> tokenToIndex;
 };
+
+#endif

@@ -220,11 +220,12 @@ std::map<double, double> GetHistogramm(const std::string& his_file)
     return histogramm;
 }
 
-std::map<double, double> GetHistogramm(MyLearner& learner, int day)
+std::map<double, double> GetHistogramm(
+    const string& outFile, const string& pairsFile,
+    Embedding& learner, int day)
 {
     std::cout << "Run GetHisogramm\n";
-    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
-    ofstream out(out_directory + "data_stat/histogramms/histogramm_" + std::to_string(day));
+    ofstream out(outFile);
     vector<size_t> users0, users1, labels;
     vector<pair<double, size_t>> distances;
     size_t user0, user1, label;
@@ -232,7 +233,7 @@ std::map<double, double> GetHistogramm(MyLearner& learner, int day)
     for (size_t j = 0; j < N; ++j)
     {
         size_t last_user = 0;
-        ifstream in(out_directory + "data_stat/pairs");
+        ifstream in(pairsFile);
         clock_t start = clock();
         size_t enumerator = 0;
         while (true)
@@ -415,7 +416,7 @@ void learn(MyLearner* learner, const vector<size_t>& users0,
     }
 }
 
-void Learn(MyLearner& learner, const string& outDirectory, int day)
+void Learn(MyLearner& learner, const string& outDirectory, const string& pairsfile, int day)
 {
     /*DayData dayData26 = read_day(out_directory + "data_by_days/26.txt");
     DayData dayData27 = read_day(out_directory + "data_by_days/27.txt");
@@ -424,11 +425,11 @@ void Learn(MyLearner& learner, const string& outDirectory, int day)
     uumap queryRank(out_directory + "query_rank_1_25");*/
     vector<size_t> users0, users1, labels;
     size_t user0, user1, label;
-    size_t N = 1;
+    size_t N = 10;
     for (size_t j = 0; j < N; ++j)
     {
         std::cout << "Step number = " << j << std::endl;
-        ifstream in(outDirectory + "auxiliary/pairs");
+        ifstream in(pairsfile);
 
         clock_t start = clock();
         size_t enumerator = 0;
@@ -454,7 +455,7 @@ void Learn(MyLearner& learner, const string& outDirectory, int day)
             size_t numThreads = 7;
             for (size_t i = 0; i < numThreads; ++i)
             {
-                std::thread t(&learn, &learner, std::ref(users0), std::ref(users1), std::ref(labels), i, numThreads, 1);
+                std::thread t(&learn, &learner, std::ref(users0), std::ref(users1), std::ref(labels), i, numThreads, .1);
                 threads.push_back(std::move(t));
             }
             for (size_t i = 0; i < numThreads; ++i)
