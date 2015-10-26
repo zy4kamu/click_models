@@ -418,14 +418,15 @@ void Test2(std::map<size_t, size_t>& users_in_train)
 
             // get nearest user
             int clickedBestRank = -1;
-            vector<std::pair<size_t, double> > nearest = embedding.GetNearest(user, 400, users);
+            vector<std::pair<size_t, double> > nearest = embedding.GetNearest(user, 4000, users);
             if (nearest.size() < 400) continue;
             vector<double> evristic(10,0);
             // predict best rank by nearest users by summ
-            for (size_t j = 399; j < std::min(size_t(4000), nearest.size()); ++j)
+            for (size_t j = 0; j < std::min(size_t(4000), nearest.size()); ++j)
             {
                 auto nearestUser = nearest[j];
                 const unordered_map<size_t, vector<double> >& nearestUserUrls = userUrl.watch(nearestUser.first);
+                clickedBestRank = -1;
                 for (size_t i = 0; i < 10; ++i)
                 {
                     size_t url = history.urls[i];

@@ -205,7 +205,7 @@ std::map<size_t, size_t> Get_number_trainig_example_with_user(const std::string&
     ifstream in(pairs_file);
     while(!in.eof())
     {
-        if (++line_number % 1000000 == 0)
+        if (++line_number % 10000 == 0)
         {
             std::cout << line_number << "\n";
         }
