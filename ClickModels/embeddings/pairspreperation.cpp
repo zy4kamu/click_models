@@ -135,7 +135,7 @@ void PreparePairs(const string& outFile, const uumap& queryUser, const uumap& us
             }
 
             bool should_break = false;
-            /*for (size_t i = 0; i < 10; ++i)
+            for (size_t i = 0; i < 10; ++i)
             {
                 const vector<double>& found = userUrl.watch(user, history.urls[i]);
                 if (found.size() > 0 && found[0] > 1 - 1e-5)
@@ -143,7 +143,7 @@ void PreparePairs(const string& outFile, const uumap& queryUser, const uumap& us
                     should_break = true;
                     break;
                 }
-            }*/
+            }
             if (should_break) continue;
 
             bool found = false;
@@ -163,13 +163,7 @@ void PreparePairs(const string& outFile, const uumap& queryUser, const uumap& us
 
             for (auto& item : users)
             {
-//                if (users.size() > 200)
-//                {
-//                    if (++enumerator % divisor != 0)
-//                    {
-//                        continue;
-//                    }
-//                }
+
                 size_t similarUserUrl = -1;
                 size_t similarUser = item.first;
                 if (similarUser == user) continue;
@@ -193,7 +187,6 @@ void PreparePairs(const string& outFile, const uumap& queryUser, const uumap& us
                     ++numPlus;
 
                 } else {
-                    //airs.push_back(pair<size_t, int> (similarUser, 0));
                     out << user << " " << similarUser << " " << 0 << "\n";
                     ++numMinus;
                 }
@@ -202,6 +195,26 @@ void PreparePairs(const string& outFile, const uumap& queryUser, const uumap& us
     }
     std::cout << "Ready!!!" << std::endl;
     out.close();
+}
+
+std::map<size_t, size_t> Get_number_trainig_example_with_user(const std::string& pairs_file)
+{
+    std::map<size_t, size_t> result;
+    size_t user0, user1, label;
+    int line_number = 0;
+    ifstream in(pairs_file);
+    while(!in.eof())
+    {
+        if (++line_number % 1000000 == 0)
+        {
+            std::cout << line_number << "\n";
+        }
+        in >> user0 >> user1 >> label;
+        result[user0] += 1;
+        result[user1] += 1;
+    }
+    return result;
+
 }
 
 std::map<double, double> GetHistogramm(const std::string& his_file)
@@ -220,9 +233,9 @@ std::map<double, double> GetHistogramm(const std::string& his_file)
     return histogramm;
 }
 
-std::map<double, double> GetHistogramm(
+void GetHistogramm(
     const string& outFile, const string& pairsFile,
-    Embedding& learner, int day)
+    Embedding& learner, std::map<size_t, size_t>& users_in_train)
 {
     std::cout << "Run GetHisogramm\n";
     ofstream out(outFile);
@@ -248,14 +261,18 @@ std::map<double, double> GetHistogramm(
                     {
                         return x.first < y.first;
                     });
-                    out << last_user << " ";
-                    double res = 0;
-                    for (int i = 0; i < distances.size(); ++i)
+                    if (users_in_train[last_user] > 1)
                     {
-                        res += labels[distances[i].second];
-                        out << res / (i+1) << " ";
+                        out << last_user << " ";
+                        double res = 0;
+                        for (int i = 0; i < distances.size(); ++i)
+                        {
+                            res += labels[distances[i].second];
+                            out << res / (i+1) << " ";
+                            //out << users_in_train[users1[distances[i].second]] << " ";
+                        }
+                        out << "\n";
                     }
-                    out << "\n";
                     last_user = user0;
                     enumerator = 0;
                     users0.clear();
@@ -282,44 +299,7 @@ std::map<double, double> GetHistogramm(
         std::cout << "Closing file..." << std::endl;
         in.close();
     }
-    /*std::sort(distances.begin(), distances.end(), [](const pair<double,size_t>& x, const pair<double,size_t>& y)
-    {
-        return x.first < y.first;
-    });*/
-    /*for (size_t i = 0; i < distances.size(); ++i)
-    {
-        //std::cout << distances[i].second << "\n";
-        out << users0[distances[i].second] << " " << users1[distances[i].second] << " "
-                                           << distances[i].first << " " << labels[distances[i].second] << "\n";
-    }*/
 
-    //int n_bins = 200;
-    std::map<double,double> histogramm;
-    /*histogramm[0.] = 1.;
-    int step = distances.size() / n_bins;
-
-
-    size_t i = 0;
-    while (i < distances.size())
-    {
-        int n_elements = 0;
-        int n_positive_elements = 0;
-        double last_d = distances[i].first;
-        int j = 0;
-        while (i < distances.size() && (j < step || last_d < distances[i].first))
-        {
-            n_elements += 1;
-            if (labels[distances[i].second] == 1) n_positive_elements += 1;
-            last_d = distances[i].first;
-            ++i;
-            ++j;
-        }
-        histogramm[last_d] = double(n_positive_elements) / n_elements;
-        out << last_d << " " << histogramm[last_d] << "\n";
-    }
-    out.close();
-    std::cout << "Ent GestHistogramm\n";*/
-    return histogramm;
 }
 
 std::map<double, double> GetGeneralHistogramm(MyLearner& learner, int day)
@@ -474,5 +454,5 @@ void Learn(MyLearner& learner, const string& outDirectory, const string& pairsfi
         in.close();
     }
     std::cout << "Printing to file..." << std::endl;
-    learner.Print(outDirectory + "auxiliary/model");
+    learner.Print(outDirectory + "embedding/model");
 }
