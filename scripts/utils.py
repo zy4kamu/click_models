@@ -37,16 +37,26 @@ def Get_precision(data_file, res_file):
     savefig(res_file)
     return str(res_distance)
 
+def Get_max(x):
+    res = x[0]
+    i = 0
+    for j in range(len(x)):
+        if res < x[j]:
+            i = j
+            res = x[j]
+    return i
+
 def PlotPrecision(data_file, res_file):
     res = []
     with open(data_file) as data:
         for line_n, line in enumerate(data):
-            if (line_n%10**6 == 0):
-                print(line_n)
+            #if (line_n%10**6 == 0):
+            #    print(line_n)
             line = line.strip().split()
-            res.append(float(line[0]))
-    axis([0,500,0.4,0.5])
-    plot (res)
+            res = [float(i) for i in line[1:]]
+            plot(res)
+            print (Get_max(res))
+    axis([0,1000,0.2,0.6])
     grid(True)
     savefig(res_file)
 
@@ -86,5 +96,6 @@ def GetCTR(data_file, res_file):
 #        directory = "../../../data_stat/"
 #        dis.write(GetCTR(directory + "histogramms/histogramm_" + str(i), directory + "hist_png/histogramm_"
 #                                + str(i) + ".png") + " " + str(i) + "\n")
-PlotPrecision("../../../data_stat/histogramms/dist_271", "../../../data_stat/hist_png/hist_100.png")
+out_dir = "/home/stepan/click_models_data/" 
+PlotPrecision(out_dir + "data_stat/histogramms/hist_100_del", out_dir + "data_stat/histogramms/hist_100.png")
 

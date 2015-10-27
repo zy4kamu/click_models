@@ -11,7 +11,7 @@
 
 //void GetHistogramm(MyLearner& learner, int step);
 
-string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+string out_directory = "/home/stepan/click_models_data/";
 
 
 void RandomPermutationOfPairs(const string& fileIn, const string& fileOut)
@@ -348,7 +348,7 @@ int Get_result(const std::vector<double>& evristic, const Query& history)
 
 int Get_bin(int n)
 {
-    std::vector<int> bins = {0,10,30,50,8,100, 200, 300, 600, 1000};
+    std::vector<int> bins = {0,10,30,50,8,100, 200, 300, 500, 1000};
     for (int i = 0; i < bins.size(); ++i)
     {
         if (n < bins[i])
@@ -360,7 +360,7 @@ int Get_bin(int n)
 void Test2(std::map<size_t, size_t>& users_in_train)
 {
     std::map<size_t, std::map<size_t,std::pair<int, int>>> res;
-    std::vector<int> bins = {0,10,30,50,8,100, 200, 300, 600, 1000};
+    std::vector<int> bins = {0,10,30,50,8,100, 200, 300, 500, 1000};
 
     clock_t start = clock();
     std::cout << "reading embedding ..." << std::endl;
@@ -458,6 +458,7 @@ void Test2(std::map<size_t, size_t>& users_in_train)
             int n_users = 0;
             std::map<size_t, pair<int, int>> r_one;
             //std::shuffle(nearest.begin(), nearest.end(), std::default_random_engine(0));
+            std::pair<int, int> last(0, 0);
             for (size_t j = 0; j < std::min(size_t(400000), nearest.size()); ++j)
             {
                 auto nearestUser = nearest[j];
@@ -480,33 +481,41 @@ void Test2(std::map<size_t, size_t>& users_in_train)
 
                      n_users += 1;
                      int click_type = Get_result(evristic, history);
+                     if (r_one.find(n_users) == r_one.end())
+                     {
+                         r_one[n_users] = std::pair<int, int>(0, 0);
+                     }
                      if (click_type == 1)
                      {
                          r_one[n_users].first += 1;
+                         last.first = 1;
+                         last.second = 0;
                      }
                      else
                      {
                          r_one[n_users].second += 1;
+                         last.first = 0;
+                         last.second = 1;
+
                      }
                 }
                 //if (n_users >= 100) break;
             }
             int bin = Get_bin(n_users);
             //std::cout << bin << "\n";
-            std::pair<int, int> last;
             res[bin];
             for (auto it = r_one.begin(); it != r_one.end(); ++it)
             {
-                if (it->first > bins[bin])
-                    continue;
-                last.first = it->second.first;
-                last.second = it->second.second;
+                //if (it->first > bins[bin])
+                //    continue;
+                if (res[bin].find(it->first) == res[bin].end()) res[bin][it->first] = std::pair<int,int> (0,0);
                 res[bin][it->first].first += it->second.first;
                 res[bin][it->first].second += it->second.second;
             }
-            int bin1 = std::min(bin+1, int(bins.size()));
-            for (int i = n_users; i < bins[bin1]; ++i)
+            int bin1 = std::min(bin+1, int(bins.size()-1));
+            for (int i = n_users+1; i < bins[bin1]; ++i)
             {
+                if (res[bin].find(i) == res[bin].end()) res[bin][i] = std::pair<int,int> (0,0);
                 res[bin][i].first += last.first;
                 res[bin][i].second += last.second;
             }
@@ -521,7 +530,7 @@ void Test2(std::map<size_t, size_t>& users_in_train)
                 }
             }
             // calculate statistics
-            if (n_users > 1000) continue;
+            //if (n_users > 1000) continue;
             if (history.type[clickedBestRank] == 2) {
                 ++numPlus;
             } else {
@@ -570,9 +579,10 @@ int main()
 //    std::function<double(double)> divLogFunctor = [](double x) -> double { return -0.2; };
 //    MyLearner learner(out_directory + "users", probFunctor, divLogFunctor, 100);
 //    Learn(learner, out_directory, out_directory + "data_stat/pairs_26");
+//    std::cout << "READY!\n";
       std::map<size_t, size_t> users_in_train =  Get_number_trainig_example_with_user(out_directory + "data_stat/pairs_26");
-      //Embedding embedding(out_directory + "embedding/model", 100);
-      //GetHistogramm(out_directory + "data_stat/histogramms/hist_0", out_directory + "data_stat/pairs_27", embedding, users_in_train);
+      Embedding embedding(out_directory + "embedding/model", 100);
+      GetHistogramm(out_directory + "data_stat/histogramms/hist_0", out_directory + "data_stat/pairs_27", embedding, users_in_train);
       Test2(users_in_train);
 
 

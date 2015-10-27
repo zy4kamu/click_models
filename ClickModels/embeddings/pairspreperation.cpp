@@ -405,7 +405,7 @@ void Learn(MyLearner& learner, const string& outDirectory, const string& pairsfi
     uumap queryRank(out_directory + "query_rank_1_25");*/
     vector<size_t> users0, users1, labels;
     size_t user0, user1, label;
-    size_t N = 4;
+    size_t N = 2;
     for (size_t j = 0; j < N; ++j)
     {
         std::cout << "Step number = " << j << std::endl;
