@@ -205,7 +205,7 @@ std::map<size_t, size_t> Get_number_trainig_example_with_user(const std::string&
     ifstream in(pairs_file);
     while(!in.eof())
     {
-        if (++line_number % 10000 == 0)
+        if (++line_number % 1000000 == 0)
         {
             std::cout << line_number << "\n";
         }
@@ -405,7 +405,7 @@ void Learn(MyLearner& learner, const string& outDirectory, const string& pairsfi
     uumap queryRank(out_directory + "query_rank_1_25");*/
     vector<size_t> users0, users1, labels;
     size_t user0, user1, label;
-    size_t N = 10;
+    size_t N = 4;
     for (size_t j = 0; j < N; ++j)
     {
         std::cout << "Step number = " << j << std::endl;
@@ -435,7 +435,7 @@ void Learn(MyLearner& learner, const string& outDirectory, const string& pairsfi
             size_t numThreads = 7;
             for (size_t i = 0; i < numThreads; ++i)
             {
-                std::thread t(&learn, &learner, std::ref(users0), std::ref(users1), std::ref(labels), i, numThreads, .1);
+                std::thread t(&learn, &learner, std::ref(users0), std::ref(users1), std::ref(labels), i, numThreads, 1);
                 threads.push_back(std::move(t));
             }
             for (size_t i = 0; i < numThreads; ++i)

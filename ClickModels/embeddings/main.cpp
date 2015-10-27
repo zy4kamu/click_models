@@ -327,8 +327,41 @@ void Test1(MyLearner& learner,int day)
 
 }
 
+int Get_result(const std::vector<double>& evristic, const Query& history)
+{
+    int clickedBestRank = 0;
+    double max_click = evristic[0];
+    for (int i = 0; i < 10; ++i)
+    {
+        if (max_click < evristic[i])
+        {
+            clickedBestRank = i;
+            max_click = evristic[i];
+        }
+    }
+    if (history.type[clickedBestRank] == 2)
+    {
+        return 1;
+    }
+    else return 0;
+}
+
+int Get_bin(int n)
+{
+    std::vector<int> bins = {0,10,30,50,8,100, 200, 300, 600, 1000};
+    for (int i = 0; i < bins.size(); ++i)
+    {
+        if (n < bins[i])
+            return std::max(int(0), i-1);
+    }
+    return bins.size() - 1;
+}
+
 void Test2(std::map<size_t, size_t>& users_in_train)
 {
+    std::map<size_t, std::map<size_t,std::pair<int, int>>> res;
+    std::vector<int> bins = {0,10,30,50,8,100, 200, 300, 600, 1000};
+
     clock_t start = clock();
     std::cout << "reading embedding ..." << std::endl;
     Embedding embedding(out_directory + "embedding/model", 100);
@@ -393,7 +426,7 @@ void Test2(std::map<size_t, size_t>& users_in_train)
             if (queryUser.watch(query).size() <  10) continue;
 
             //user not in train
-            if (users_in_train[user] < 1) continue;
+            if (users_in_train[user] < 2) continue;
 
             // skip serps where there were not deep click
             bool found = false;
@@ -418,11 +451,14 @@ void Test2(std::map<size_t, size_t>& users_in_train)
 
             // get nearest user
             int clickedBestRank = -1;
-            vector<std::pair<size_t, double> > nearest = embedding.GetNearest(user, 4000, users);
-            if (nearest.size() < 400) continue;
+            vector<std::pair<size_t, double> > nearest = embedding.GetNearest(user, users.size(), users);
+            //if (users.size() < 400) continue;
             vector<double> evristic(10,0);
             // predict best rank by nearest users by summ
-            for (size_t j = 0; j < std::min(size_t(4000), nearest.size()); ++j)
+            int n_users = 0;
+            std::map<size_t, pair<int, int>> r_one;
+            //std::shuffle(nearest.begin(), nearest.end(), std::default_random_engine(0));
+            for (size_t j = 0; j < std::min(size_t(400000), nearest.size()); ++j)
             {
                 auto nearestUser = nearest[j];
                 const unordered_map<size_t, vector<double> >& nearestUserUrls = userUrl.watch(nearestUser.first);
@@ -439,8 +475,40 @@ void Test2(std::map<size_t, size_t>& users_in_train)
                 }
                 if (clickedBestRank >= 0)
                 {
-                    evristic[clickedBestRank] += 1;
+
+                     evristic[clickedBestRank] += 1;
+
+                     n_users += 1;
+                     int click_type = Get_result(evristic, history);
+                     if (click_type == 1)
+                     {
+                         r_one[n_users].first += 1;
+                     }
+                     else
+                     {
+                         r_one[n_users].second += 1;
+                     }
                 }
+                //if (n_users >= 100) break;
+            }
+            int bin = Get_bin(n_users);
+            //std::cout << bin << "\n";
+            std::pair<int, int> last;
+            res[bin];
+            for (auto it = r_one.begin(); it != r_one.end(); ++it)
+            {
+                if (it->first > bins[bin])
+                    continue;
+                last.first = it->second.first;
+                last.second = it->second.second;
+                res[bin][it->first].first += it->second.first;
+                res[bin][it->first].second += it->second.second;
+            }
+            int bin1 = std::min(bin+1, int(bins.size()));
+            for (int i = n_users; i < bins[bin1]; ++i)
+            {
+                res[bin][i].first += last.first;
+                res[bin][i].second += last.second;
             }
             clickedBestRank = 0;
             double max_click = evristic[0];
@@ -453,6 +521,7 @@ void Test2(std::map<size_t, size_t>& users_in_train)
                 }
             }
             // calculate statistics
+            if (n_users > 1000) continue;
             if (history.type[clickedBestRank] == 2) {
                 ++numPlus;
             } else {
@@ -474,6 +543,17 @@ void Test2(std::map<size_t, size_t>& users_in_train)
               << numOnFirst << " " << numNOotOnFirst << endl;
 
     std::cout << "Ready!!!" << std::endl;
+    std::ofstream out(out_directory + "/data_stat/histogramms/hist_100_del");
+    for (auto it = res.begin(); it != res.end(); ++it)
+    {
+        out << it->first << " ";
+        for (auto it1 = it->second.begin(); it1 != it->second.end(); ++it1)
+        {
+            out << it1->second.first / (it1->second.first + it1->second.second + 1e-10) << " ";
+        }
+        out << "\n";
+    }
+    out.close();
 }
 
 int main()
@@ -489,10 +569,10 @@ int main()
 //    std::function<double(double)> probFunctor = [](double x) -> double { return std::exp(-x/5.); };
 //    std::function<double(double)> divLogFunctor = [](double x) -> double { return -0.2; };
 //    MyLearner learner(out_directory + "users", probFunctor, divLogFunctor, 100);
-//    Learn(learner, out_directory, out_directory + "data_stat/pairs_27");
+//    Learn(learner, out_directory, out_directory + "data_stat/pairs_26");
       std::map<size_t, size_t> users_in_train =  Get_number_trainig_example_with_user(out_directory + "data_stat/pairs_26");
-//      Embedding embedding(out_directory + "embedding/model", 100);
-//      GetHistogramm(out_directory + "data_stat/histogramms/hist_0", out_directory + "data_stat/pairs_27", embedding, users_in_train);
+      //Embedding embedding(out_directory + "embedding/model", 100);
+      //GetHistogramm(out_directory + "data_stat/histogramms/hist_0", out_directory + "data_stat/pairs_27", embedding, users_in_train);
       Test2(users_in_train);
 
 
