@@ -44,7 +44,7 @@ def Get_max(x):
         if res < x[j]:
             i = j
             res = x[j]
-    return i
+    return (i, res)
 
 def PlotPrecision(data_file, res_file):
     res = []
@@ -55,7 +55,7 @@ def PlotPrecision(data_file, res_file):
             line = line.strip().split()
             res = [float(i) for i in line[1:]]
             plot(res)
-            print (Get_max(res))
+            print (Get_max(res)),res[-1]
     axis([0,1000,0.2,0.6])
     grid(True)
     savefig(res_file)

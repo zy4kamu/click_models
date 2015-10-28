@@ -348,7 +348,7 @@ int Get_result(const std::vector<double>& evristic, const Query& history)
 
 int Get_bin(int n)
 {
-    std::vector<int> bins = {0,10,30,50,8,100, 200, 300, 500, 1000};
+    std::vector<int> bins = {0,10,30,50,80,100, 200, 300, 500, 1000};
     for (int i = 0; i < bins.size(); ++i)
     {
         if (n < bins[i])
@@ -360,11 +360,11 @@ int Get_bin(int n)
 void Test2(std::map<size_t, size_t>& users_in_train)
 {
     std::map<size_t, std::map<size_t,std::pair<int, int>>> res;
-    std::vector<int> bins = {0,10,30,50,8,100, 200, 300, 500, 1000};
+    std::vector<int> bins = {0,10,30,50,80,100, 200, 300, 500, 1000};
 
     clock_t start = clock();
     std::cout << "reading embedding ..." << std::endl;
-    Embedding embedding(out_directory + "embedding/model", 100);
+    Embedding embedding("/home/stepan/click_models_data/embedding/model25", 100);
     std::cout << "have read embedding for " << double(clock() - start) / CLOCKS_PER_SEC << " seconds ..." << std::endl;
 
     start = clock();
@@ -457,7 +457,7 @@ void Test2(std::map<size_t, size_t>& users_in_train)
             // predict best rank by nearest users by summ
             int n_users = 0;
             std::map<size_t, pair<int, int>> r_one;
-            //std::shuffle(nearest.begin(), nearest.end(), std::default_random_engine(0));
+            std::shuffle(nearest.begin(), nearest.end(), std::default_random_engine(0));
             std::pair<int, int> last(0, 0);
             for (size_t j = 0; j < std::min(size_t(400000), nearest.size()); ++j)
             {
@@ -530,7 +530,7 @@ void Test2(std::map<size_t, size_t>& users_in_train)
                 }
             }
             // calculate statistics
-            //if (n_users > 1000) continue;
+            if (n_users < 200) continue;
             if (history.type[clickedBestRank] == 2) {
                 ++numPlus;
             } else {
@@ -552,17 +552,17 @@ void Test2(std::map<size_t, size_t>& users_in_train)
               << numOnFirst << " " << numNOotOnFirst << endl;
 
     std::cout << "Ready!!!" << std::endl;
-    std::ofstream out(out_directory + "/data_stat/histogramms/hist_100_del");
-    for (auto it = res.begin(); it != res.end(); ++it)
-    {
-        out << it->first << " ";
-        for (auto it1 = it->second.begin(); it1 != it->second.end(); ++it1)
-        {
-            out << it1->second.first / (it1->second.first + it1->second.second + 1e-10) << " ";
-        }
-        out << "\n";
-    }
-    out.close();
+//    std::ofstream out(out_directory + "/data_stat/histogramms/hist_100_del");
+//    for (auto it = res.begin(); it != res.end(); ++it)
+//    {
+//        out << it->first << " ";
+//        for (auto it1 = it->second.begin(); it1 != it->second.end(); ++it1)
+//        {
+//            out << it1->second.first / (it1->second.first + it1->second.second + 1e-10) << " ";
+//        }
+//        out << "\n";
+//    }
+//    out.close();
 }
 
 int main()
@@ -575,14 +575,15 @@ int main()
 //     PreparePairs(out_directory + "data_stat/pairs_26", queryUser, userUrl, queryRank, dayData);
 
     // learn
-//    std::function<double(double)> probFunctor = [](double x) -> double { return std::exp(-x/5.); };
-//    std::function<double(double)> divLogFunctor = [](double x) -> double { return -0.2; };
+    std::function<double(double)> probFunctor = [](double x) -> double { return std::exp(-x/5.); };
+    std::function<double(double)> divLogFunctor = [](double x) -> double { return -0.2; };
+//    std::function<double(double)> probFunctor = [](double x) -> double { return std::exp(-x*x/4.); };
+//    std::function<double(double)> divLogFunctor = [](double x) -> double { return -x/2.; };
 //    MyLearner learner(out_directory + "users", probFunctor, divLogFunctor, 100);
 //    Learn(learner, out_directory, out_directory + "data_stat/pairs_26");
 //    std::cout << "READY!\n";
+
       std::map<size_t, size_t> users_in_train =  Get_number_trainig_example_with_user(out_directory + "data_stat/pairs_26");
-      Embedding embedding(out_directory + "embedding/model", 100);
-      GetHistogramm(out_directory + "data_stat/histogramms/hist_0", out_directory + "data_stat/pairs_27", embedding, users_in_train);
       Test2(users_in_train);
 
 
