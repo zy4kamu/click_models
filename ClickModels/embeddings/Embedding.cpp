@@ -65,7 +65,7 @@ double Embedding::Distance(size_t first, size_t second)
 vector<std::pair<size_t, double> > Embedding::GetNearest(size_t index, size_t number)
 {
     typedef std::pair<double, size_t> Pair;
-    std::priority_queue<Pair, vector<Pair>, std::less<Pair> > queue;
+    std::priority_queue<Pair, vector<Pair>, std::greater<Pair> > queue;
     for (const auto& kvp : this->tokenToIndex)
     {
         size_t pretendent = kvp.first;

@@ -29,12 +29,14 @@ def Get_precision(data_file, res_file):
                 sum_label += label
             last_dist = dist
     l = len(res[0])
-    axis([0, 200, 0.2, 0.5])
-    #plot([float(r)/res[0][-1] for r in res[0]], res[1])
-    plot(labels)
+    axis([0., 200, 0.4, 0.6])
+    print (dists)
+    plot(dists, res[1])
+    #plot(labels)
     grid(True)
 
     savefig(res_file)
+    print(res_distance)
     return str(res_distance)
 
 def Get_max(x):
@@ -47,6 +49,7 @@ def Get_max(x):
     return (i, res)
 
 def PlotPrecision(data_file, res_file):
+    best_res = {0:7, 1:25, 2:48, 3:29, 4:39, 5:108, 6:179, 7:217, 8:123, 9:3840}
     res = []
     with open(data_file) as data:
         for line_n, line in enumerate(data):
@@ -55,8 +58,8 @@ def PlotPrecision(data_file, res_file):
             line = line.strip().split()
             res = [float(i) for i in line[1:]]
             plot(res)
-            print (Get_max(res)),res[-1]
-    axis([0,1000,0.2,0.6])
+            print Get_max(res),res[-1]
+    axis([0,1000,0.2,0.8])
     grid(True)
     savefig(res_file)
 
@@ -96,6 +99,8 @@ def GetCTR(data_file, res_file):
 #        directory = "../../../data_stat/"
 #        dis.write(GetCTR(directory + "histogramms/histogramm_" + str(i), directory + "hist_png/histogramm_"
 #                                + str(i) + ".png") + " " + str(i) + "\n")
-out_dir = "/home/stepan/click_models_data/" 
-PlotPrecision(out_dir + "data_stat/histogramms/hist_100_del", out_dir + "data_stat/histogramms/hist_100.png")
+out_dir = "/Users/annasepliaraskaia/Desktop/work/"
+#Get_precision(out_dir + "data_stat/histogramms/histogramm_1000", out_dir + "data_stat/histogramms/histogramm_1000.png")
+#Get_precision(out_dir + "data_stat/histogramms/histogramm_1001", out_dir + "data_stat/histogramms/histogramm_1001.png")
+PlotPrecision(out_dir + "data_stat/histogramms/hist_100", out_dir + "data_stat/histogramms/hist_100.png")
 

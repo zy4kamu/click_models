@@ -23,7 +23,7 @@ void Counters::clear()
 void Counters::save(size_t start_day, size_t finish_day)
 {
     string postfix = "_" + std::to_string(start_day) + "_" + std::to_string(finish_day);
-    string out_directory = "/tmp/";
+    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
     query_url.save(out_directory + "query_url" + postfix);
     user_url.save(out_directory + "user_url" + postfix);
     user_rank.save(out_directory + "user_rank" + postfix);

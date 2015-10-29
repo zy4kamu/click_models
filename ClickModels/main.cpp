@@ -129,14 +129,15 @@ void TryTester()
 int main() 
 {
     std::cout << "click-models: main.cpp is running..." << std::endl;
-    const string dataFolder = "/home/stepan/click_models_data/";
+    //const string dataFolder = "/home/stepan/click_models_data/";
+      string dataFolder= "/Users/annasepliaraskaia/Desktop/work/";
 // 1.
 //    auto start = clock();
 //    separate_by_day(dataFolder + "trainW2V", dataFolder + "data_by_days/");
 //    auto end = clock();
 //    std::cout << double(end - start) /  CLOCKS_PER_SEC << std::endl;
 // 2.
-    calculate_counters(dataFolder + "data_by_days/", 1, 25);
+    calculate_counters(dataFolder + "data_by_days/", 1, 24);
 
 // 3.
 //    TryTester<Strategy0>();

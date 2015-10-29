@@ -18,7 +18,7 @@ void GetHistogramm(
     const string& outFile, const string& pairsFile,
     Embedding& learner, std::map<size_t, size_t>& users_in_train);
 std::map<double, double> GetHistogramm(const std::string& his_file);
-std::map<double, double> GetGeneralHistogramm(MyLearner& learner, int day);
+std::map<double, double> GetGeneralHistogramm(Embedding& learner, int day);
 
 std::map<size_t, size_t> Get_number_trainig_example_with_user(const std::string& pairs_file);
 void PreparePairs(const string& outFile, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, DayData& dayData);

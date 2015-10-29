@@ -6,7 +6,7 @@ SET(CMAKE_EXE_LINKER_FLAGS "-pthread")
 
 if (${CMAKE_BUILD_TYPE} MATCHES DEBUG)
     MESSAGE("Building DEBUG version: -O0 is used")
-    add_compile_options(-O0 -m64 -pthread -std=c++0x -ggdb3)
+    add_compile_options(-O0 -m64 -pthread -std=c++0x -g)
 else()
     MESSAGE("Building RELEASE version: -O3 is used")
     add_compile_options(-Ofast -m64 -std=c++11 -pthread)

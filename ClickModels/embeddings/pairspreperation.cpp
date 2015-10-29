@@ -302,7 +302,7 @@ void GetHistogramm(
 
 }
 
-std::map<double, double> GetGeneralHistogramm(MyLearner& learner, int day)
+std::map<double, double> GetGeneralHistogramm(Embedding& learner, int day)
 {
     std::cout << "Run GetHisogramm\n";
     string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
@@ -314,7 +314,7 @@ std::map<double, double> GetGeneralHistogramm(MyLearner& learner, int day)
     for (size_t j = 0; j < N; ++j)
     {
         size_t last_user = 0;
-        ifstream in(out_directory + "data_stat/pairs");
+        ifstream in(out_directory + "data_stat/pairs_27");
         clock_t start = clock();
         size_t enumerator = 0;
         while (true)
@@ -346,12 +346,12 @@ std::map<double, double> GetGeneralHistogramm(MyLearner& learner, int day)
     {
         return x.first < y.first;
     });
-    /*for (size_t i = 0; i < distances.size(); ++i)
-    {
-        //std::cout << distances[i].second << "\n";
-        out << users0[distances[i].second] << " " << users1[distances[i].second] << " "
-                                           << distances[i].first << " " << labels[distances[i].second] << "\n";
-    }*/
+//    for (size_t i = 0; i < distances.size(); ++i)
+//    {
+//        //std::cout << distances[i].second << "\n";
+//        out << users0[distances[i].second] << " " << users1[distances[i].second] << " "
+//                                           << distances[i].first << " " << labels[distances[i].second] << "\n";
+//    }
 
     int n_bins = 200;
     std::map<double,double> histogramm;
@@ -391,7 +391,7 @@ void learn(MyLearner* learner, const vector<size_t>& users0,
     for (size_t i = coreIndex; i < users0.size(); i += numCores)
     {
         user0 = users0[i]; user1 = users1[i]; label = labels[i];
-        if (label == 1) learner->MakeOnePositiveStep(user0, user1, rate);
+        if (label == 1) learner->MakeOnePositiveStep(user0, user1, 2*rate);
         else learner->MakeOneNegativeStep(user0, user1, rate);
     }
 }
@@ -405,7 +405,7 @@ void Learn(MyLearner& learner, const string& outDirectory, const string& pairsfi
     uumap queryRank(out_directory + "query_rank_1_25");*/
     vector<size_t> users0, users1, labels;
     size_t user0, user1, label;
-    size_t N = 30;
+    size_t N = 1;
     for (size_t j = 0; j < N; ++j)
     {
         std::cout << "Step number = " << j << std::endl;
@@ -435,7 +435,7 @@ void Learn(MyLearner& learner, const string& outDirectory, const string& pairsfi
             size_t numThreads = 7;
             for (size_t i = 0; i < numThreads; ++i)
             {
-                std::thread t(&learn, &learner, std::ref(users0), std::ref(users1), std::ref(labels), i, numThreads, 0.1);
+                std::thread t(&learn, &learner, std::ref(users0), std::ref(users1), std::ref(labels), i, numThreads, 0.4);
                 threads.push_back(std::move(t));
             }
             for (size_t i = 0; i < numThreads; ++i)
@@ -452,7 +452,7 @@ void Learn(MyLearner& learner, const string& outDirectory, const string& pairsfi
         }
         std::cout << "Closing file..." << std::endl;
         in.close();
-        if (j % 5 == 0)
+        if (j % 1 == 0)
         {
         std::cout << "Printing to file..." << std::endl;
         learner.Print(outDirectory + "embedding/model" + std::to_string(j));
