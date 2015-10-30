@@ -59,7 +59,7 @@ def PlotPrecision(data_file, res_file):
             res = [float(i) for i in line[1:]]
             plot(res)
             print Get_max(res),res[-1]
-    axis([0,1000,0.2,0.8])
+    axis([0, 400,0.2,0.8])
     grid(True)
     savefig(res_file)
 
@@ -99,7 +99,8 @@ def GetCTR(data_file, res_file):
 #        directory = "../../../data_stat/"
 #        dis.write(GetCTR(directory + "histogramms/histogramm_" + str(i), directory + "hist_png/histogramm_"
 #                                + str(i) + ".png") + " " + str(i) + "\n")
-out_dir = "/home/stepan/click_models_data/"
+#out_dir = "/home/stepan/click_models_data/"
+out_dir = "/Users/annasepliaraskaia/Desktop/work/"
 #Get_precision(out_dir + "data_stat/histogramms/histogramm_1000", out_dir + "data_stat/histogramms/histogramm_1000.png")
 #Get_precision(out_dir + "data_stat/histogramms/histogramm_1001", out_dir + "data_stat/histogramms/histogramm_1001.png")
 PlotPrecision(out_dir + "data_stat/histogramms/hist_100", out_dir + "data_stat/histogramms/hist_100.png")

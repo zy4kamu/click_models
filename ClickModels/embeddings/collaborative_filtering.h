@@ -37,7 +37,7 @@ public:
 class collaborative_filtering
 {
 private:
-    double rate;
+
     int dim;
     std::unordered_map<size_t, std::vector<double>> embedding;
     Similarity_function f;
@@ -51,6 +51,7 @@ public:
                                            const std::vector<bool>& truth,
                                            size_t user);
     void Print(const string& file) const;
+    double rate;;
 };
 
 #endif // COLLABORATIVE_FILTERING_H

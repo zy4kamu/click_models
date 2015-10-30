@@ -125,7 +125,7 @@ void collaborative_filtering::One_step(const std::vector<Example>& examples,
                                        size_t user)
 {
     ++enumerator;
-    std::vector<double> new_vector_for_user(10,0.);
+    std::vector<double> new_vector_for_user(dim,0.);
     std:vector<double> position_distribution = res_one_position(examples, user);
 //    for (int i = 0; i < 10; ++i)
 //    {
@@ -175,17 +175,22 @@ void collaborative_filtering::One_step(const std::vector<Example>& examples,
         }
         summ(new_vector_for_user, f.divSimilarity(embedding[user], embedding[examples[i].user]), coeff * rate);
         summ(embedding[examples[i].user], f.divSimilarity(embedding[examples[i].user], embedding[user]), coeff * rate);
+//        summ(embedding[user], new_vector_for_user, 1);
 //        std::vector<double> position_distribution_after = res_one_position(examples, user);
+//        double summ_all_after = std::accumulate(position_distribution_after.begin(), position_distribution_after.end(), 0.);
+//        double loglikeihood_after = LogLikelihood(truth, position_distribution_after, summ_all_after);
+//        std::cout << loglikeihood_before << " " << loglikeihood_after << "\n";
+//        summ(embedding[user], new_vector_for_user, 1);
     }
-   //summ(embedding[user], new_vector_for_user, 1.);
+   summ(embedding[user], new_vector_for_user, 1.);
 
     std::vector<double> position_distribution_after = res_one_position(examples, user);
     double summ_all_after = std::accumulate(position_distribution_after.begin(), position_distribution_after.end(), 0.);
     double loglikeihood_after = LogLikelihood(truth, position_distribution_after, summ_all_after);
-    if (loglikeihood_before > loglikeihood_after)
-    {
-        std::cout << loglikeihood_before << " " << loglikeihood_after << "\n";
-    }
+    //if (loglikeihood_before > loglikeihood_after)
+//    {
+//        std::cout << loglikeihood_before << " " << loglikeihood_after << "\n";
+//    }
 }
 
 void collaborative_filtering::Learn(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, DayData& dayData)

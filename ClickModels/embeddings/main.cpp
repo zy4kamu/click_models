@@ -12,8 +12,8 @@
 
 //void GetHistogramm(MyLearner& learner, int step);
 
-string out_directory = "/home/stepan/click_models_data/";
-//string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+//string out_directory = "/home/stepan/click_models_data/";
+string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
 
 
 void RandomPermutationOfPairs(const string& fileIn, const string& fileOut)
@@ -456,7 +456,7 @@ void Test2(std::map<size_t, size_t>& users_in_train)
             vector<std::pair<size_t, double> > nearest = embedding.GetNearest(user, users.size(), users);
             //if (nearest[0].second > 2) continue;
             //if (users.size() < 400) continue;
-            vector<double> evristic(10,0);
+            vector<double> evristic(10,1e-5);
             // predict best rank by nearest users by summ
             int n_users = 0;
             std::map<size_t, pair<int, int>> r_one;
@@ -481,7 +481,7 @@ void Test2(std::map<size_t, size_t>& users_in_train)
                 if (clickedBestRank >= 0)
                 {
 
-                     evristic[clickedBestRank] += 1; //* std::exp(-nearestUser.second);
+                     evristic[clickedBestRank] += 1 * std::exp(-nearestUser.second);
                      //std::cout << nearestUser.second << " ";
                      //if (nearestUser.second <= 2)
                          n_users += 1;
@@ -506,6 +506,11 @@ void Test2(std::map<size_t, size_t>& users_in_train)
                 }
                 //if (n_users >= 100) break;
             }
+            double evristic_summ = std::accumulate(evristic.begin(), evristic.end(), 0);
+
+
+            n_users += 1;
+
             //if (n_users <  80) continue;
             //std::cout << "\n";
             int bin = Get_bin(n_users);
@@ -593,29 +598,34 @@ int main()
 //    uumap queryRank(out_directory + "query_rank_1_25");
 //    DayData dayData = read_day(out_directory + "data_by_days/26.txt");
 //    collaborative_filtering learner(1, 100, out_directory + "users");
-//      vector<Example> del;
-//      del.push_back(Example(1,0));
-//      del.push_back(Example(2,0));
-//      del.push_back(Example(3,1));
-//      del.push_back(Example(4,1));
-//      del.push_back(Example(5,1));
-//      del.push_back(Example(6,1));
-//      del.push_back(Example(7,1));
-//      vector<bool> truth (10,false);
-//      truth[0] = true;
-//      for (int i = 0; i < 10; ++i)
-//      {
-//        learner.One_step(del,truth,0);
-//      }
-//    learner.Learn(queryUser, userUrl, queryRank, dayData);
+//      std::vector<Example> examples;
+//      std::vector<bool> truth(10, false);
+//      truth[2] = true;
+//      examples.push_back(Example(0,0));
+//      examples.push_back(Example(1,0));
+//      examples.push_back(Example(2,0));
+//      examples.push_back(Example(3,1));
+//      examples.push_back(Example(4,1));
+//      examples.push_back(Example(5,1));
+//      examples.push_back(Example(6,1));
+//      examples.push_back(Example(7,2));
+//      examples.push_back(Example(8,2));
+//      learner.One_step(examples,truth,9);
+//    for (int i = 0; i < 2; ++i)
+//    {
+//        learner.rate /= (i+1);
+//        learner.Learn(queryUser, userUrl, queryRank, dayData);
+//    }
 //    queryUser.clear();
 //    userUrl.clear();
 //    queryRank.clear();
 //    dayData.clear();
 //    learner.Print(out_directory + "embedding/model");
 
-      std::map<size_t, size_t> users_in_train =  Get_number_trainig_example_with_user(out_directory + "data_stat/pairs_26");
-      Test2(users_in_train);
+    std::map<size_t, size_t> users_in_train =  Get_number_trainig_example_with_user(out_directory + "data_stat/pairs_26");
+    Test2(users_in_train);
+
+
 
 
 
