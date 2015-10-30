@@ -99,7 +99,7 @@ def GetCTR(data_file, res_file):
 #        directory = "../../../data_stat/"
 #        dis.write(GetCTR(directory + "histogramms/histogramm_" + str(i), directory + "hist_png/histogramm_"
 #                                + str(i) + ".png") + " " + str(i) + "\n")
-out_dir = "/Users/annasepliaraskaia/Desktop/work/"
+out_dir = "/home/stepan/click_models_data/"
 #Get_precision(out_dir + "data_stat/histogramms/histogramm_1000", out_dir + "data_stat/histogramms/histogramm_1000.png")
 #Get_precision(out_dir + "data_stat/histogramms/histogramm_1001", out_dir + "data_stat/histogramms/histogramm_1001.png")
 PlotPrecision(out_dir + "data_stat/histogramms/hist_100", out_dir + "data_stat/histogramms/hist_100.png")

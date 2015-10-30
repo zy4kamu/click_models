@@ -43,12 +43,13 @@ private:
     Similarity_function f;
 private:
     std::vector<double> res_one_position(const std::vector<Example>& examples, size_t user) const;
-    void One_step(const std::vector<Example>& examples,
-                                           const std::vector<bool>& truth,
-                                           size_t user);
+
 public:
     collaborative_filtering(double rate_, int dim_, const string& usersFile);
     void Learn(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, DayData& dayData);
+    void One_step(const std::vector<Example>& examples,
+                                           const std::vector<bool>& truth,
+                                           size_t user);
     void Print(const string& file) const;
 };
 

@@ -91,7 +91,7 @@ void summ(std::vector<double>& x, const std::vector<double>&y, double rate)
 
 std::vector<double> collaborative_filtering::res_one_position(const std::vector<Example>& examples, size_t user) const
 {
-    std::vector<double> res(10, 0.1);
+    std::vector<double> res(10, 1e-5);
     for (size_t i = 0; i < examples.size(); ++i)
     {
         res[examples[i].rang_click_document] +=
@@ -100,10 +100,31 @@ std::vector<double> collaborative_filtering::res_one_position(const std::vector<
     return res;
 }
 
+static size_t enumerator = 0;
+
+double LogLikelihood(const std::vector<bool>& truth, const std::vector<double>& position_distribution, double sum)
+{
+    double res = 0;
+    for (size_t i = 0; i < truth.size(); ++i)
+    {
+        if (truth[i])
+        {
+            res += std::log(position_distribution[i]/sum);
+        }
+        else
+        {
+            res += std::log(1 - position_distribution[i]/sum);
+        }
+    }
+    return res;
+
+}
+
 void collaborative_filtering::One_step(const std::vector<Example>& examples, 
                                        const std::vector<bool>& truth,
                                        size_t user)
 {
+    ++enumerator;
     std::vector<double> new_vector_for_user(10,0.);
     std:vector<double> position_distribution = res_one_position(examples, user);
 //    for (int i = 0; i < 10; ++i)
@@ -113,16 +134,19 @@ void collaborative_filtering::One_step(const std::vector<Example>& examples,
 //    std::cout << "\n";
 
     double sum_all = std::accumulate(position_distribution.begin(), position_distribution.end(), 0.);
+    double loglikeihood_before = LogLikelihood(truth, position_distribution, sum_all);
     for (size_t i = 0; i < examples.size(); ++i)
     {
         double coeff = -10./ sum_all;
         for (size_t rang = 0; rang < 10; ++rang)
         {
+            bool x = truth[rang];
             if (rang == examples[i].rang_click_document)
             {
-                if (truth[rang])
+
+                if (x)
                 {
-                    coeff += 1./ (position_distribution[rang] + 0.1);
+                    coeff += 1./ (position_distribution[rang]);
                     if (coeff != coeff)
                     {
                         std::cout << coeff << " " << position_distribution[rang] << "POSITION" << " ";
@@ -132,9 +156,9 @@ void collaborative_filtering::One_step(const std::vector<Example>& examples,
             }
             else
             {
-                if (!truth[rang])
+                if (!x)
                 {
-                    coeff += 1/(sum_all - position_distribution[rang] + 0.1);
+                    coeff += 1/(sum_all - position_distribution[rang]);
                     if (coeff != coeff)
                     {
                        std::cout << coeff << " " << position_distribution[rang] << "POSITION" << " ";
@@ -143,10 +167,25 @@ void collaborative_filtering::One_step(const std::vector<Example>& examples,
                 }
             }
         }
-        summ(embedding[examples[i].user], f.divSimilarity(embedding[examples[i].user], embedding[user]), coeff * rate);
+        double megarate = coeff * rate;
+        if (std::isinf(megarate) || std::isnan(megarate))
+        {
+            std::cout << enumerator << std::endl;
+            std::cout << "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ" << std::endl;
+        }
         summ(new_vector_for_user, f.divSimilarity(embedding[user], embedding[examples[i].user]), coeff * rate);
+        summ(embedding[examples[i].user], f.divSimilarity(embedding[examples[i].user], embedding[user]), coeff * rate);
+//        std::vector<double> position_distribution_after = res_one_position(examples, user);
     }
-    summ(embedding[user], new_vector_for_user, 1.);
+   //summ(embedding[user], new_vector_for_user, 1.);
+
+    std::vector<double> position_distribution_after = res_one_position(examples, user);
+    double summ_all_after = std::accumulate(position_distribution_after.begin(), position_distribution_after.end(), 0.);
+    double loglikeihood_after = LogLikelihood(truth, position_distribution_after, summ_all_after);
+    if (loglikeihood_before > loglikeihood_after)
+    {
+        std::cout << loglikeihood_before << " " << loglikeihood_after << "\n";
+    }
 }
 
 void collaborative_filtering::Learn(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, DayData& dayData)

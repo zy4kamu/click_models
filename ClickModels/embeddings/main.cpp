@@ -12,8 +12,8 @@
 
 //void GetHistogramm(MyLearner& learner, int step);
 
-//string out_directory = "/home/stepan/click_models_data/";
-string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+string out_directory = "/home/stepan/click_models_data/";
+//string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
 
 
 void RandomPermutationOfPairs(const string& fileIn, const string& fileOut)
@@ -376,7 +376,7 @@ void Test2(std::map<size_t, size_t>& users_in_train)
     std::cout << "have read counters for " << double(clock() - start) / CLOCKS_PER_SEC << " seconds ..." << std::endl;
 
     start = clock();
-    DayData dayData = read_day(out_directory + "data_by_days/26.txt");
+    DayData dayData = read_day(out_directory + "data_by_days/27.txt");
     std::cout << "have read day data for " << double(clock() - start) / CLOCKS_PER_SEC << " seconds ..." << std::endl;
 
     size_t enumerator = 0;
@@ -481,7 +481,7 @@ void Test2(std::map<size_t, size_t>& users_in_train)
                 if (clickedBestRank >= 0)
                 {
 
-                     evristic[clickedBestRank] += 1 * std::exp(-nearestUser.second);
+                     evristic[clickedBestRank] += 1; //* std::exp(-nearestUser.second);
                      //std::cout << nearestUser.second << " ";
                      //if (nearestUser.second <= 2)
                          n_users += 1;
@@ -592,7 +592,21 @@ int main()
 //    uumap userUrl(out_directory + "user_url_1_25");
 //    uumap queryRank(out_directory + "query_rank_1_25");
 //    DayData dayData = read_day(out_directory + "data_by_days/26.txt");
-//    collaborative_filtering learner(0.1, 100, out_directory + "users");
+//    collaborative_filtering learner(1, 100, out_directory + "users");
+//      vector<Example> del;
+//      del.push_back(Example(1,0));
+//      del.push_back(Example(2,0));
+//      del.push_back(Example(3,1));
+//      del.push_back(Example(4,1));
+//      del.push_back(Example(5,1));
+//      del.push_back(Example(6,1));
+//      del.push_back(Example(7,1));
+//      vector<bool> truth (10,false);
+//      truth[0] = true;
+//      for (int i = 0; i < 10; ++i)
+//      {
+//        learner.One_step(del,truth,0);
+//      }
 //    learner.Learn(queryUser, userUrl, queryRank, dayData);
 //    queryUser.clear();
 //    userUrl.clear();
