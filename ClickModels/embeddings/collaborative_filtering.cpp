@@ -10,14 +10,6 @@ double similarity(const std::vector<double>& x,const std::vector<double>& y)
         if (x[i] != x[i]) cout_ = true;
         if (y[i] != y[i]) cout_ = true;
     }
-    if (cout_)
-    {
-        std::cout << "1\n";
-        for (int i = 0; i < x.size(); ++i)
-            std::cout << x[i] << " " << y[i] << " ";
-        std::cout << "\n";
-        std::exit(0);
-    }
     return std::exp(-std::sqrt(res));
 
 }
@@ -44,16 +36,7 @@ vector<double> divSimilarity(const std::vector<double>& x,const std::vector<doub
     for (size_t i = 0; i < x.size(); ++i)
     {
         res_v[i] = (x[i] - y[i]) * coef;
-        if (res_v[i] != res_v[i])
-        {
-            cout_ = true;
-        }
 
-    }
-    if (cout_)
-    {
-        std::cout << "2\n " << coef;
-        std::exit(1);
     }
     return res_v;
 }
@@ -331,7 +314,10 @@ void collaborative_filtering::Learn(const uumap& queryUser, const uumap& userUrl
                 }
                 if (!found) continue;
                 if (user == similarUser) continue;
-                examples.push_back(Example(similarUser, similarUserUrl));
+                if (random()%2 == 0)
+                {
+                    examples.push_back(Example(similarUser, similarUserUrl));
+                }
                 if (history.type[similarUserUrl] == 2) {
                     ++numPlus;
 

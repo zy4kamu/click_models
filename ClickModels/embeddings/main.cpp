@@ -3,7 +3,7 @@
 #include "FileReader.h"
 #include "FileWriter.h"
 #include "pairspreperation.h"
-#include "embbedingbydays.h"
+//#include "embbedingbydays.h"
 #include "personalizedclickmodel.h"
 #include "Embedding.h"
 #include "collaborative_filtering.h"
@@ -13,8 +13,8 @@
 //void GetHistogramm(MyLearner& learner, int step);
 
 //string out_directory = "/home/stepan/click_models_data/";
-//string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
-string out_directory = "/home/anna/Рабочий стол/work/data/";
+string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+//string out_directory = "/home/anna/Рабочий стол/work/data/";
 
 
 void RandomPermutationOfPairs(const string& fileIn, const string& fileOut)
@@ -364,20 +364,21 @@ void Test2(std::map<size_t, size_t>& users_in_train)
 {
     std::map<size_t, std::map<size_t,std::pair<int, int>>> res;
     std::vector<int> bins = {0,10,30,50,80,100, 200, 300, 500, 1000};
+    std::ofstream out(out_directory + "data_stat/histogramms/hist_100");
 
     clock_t start = clock();
     std::cout << "reading embedding ..." << std::endl;
-    Embedding embedding(out_directory + "embedding/model", 70);
+    Embedding embedding(out_directory + "embedding/model", 100);
     std::cout << "have read embedding for " << double(clock() - start) / CLOCKS_PER_SEC << " seconds ..." << std::endl;
 
     start = clock();
-    uumap queryUser(out_directory + "query_user_1_7");
-    uumap userUrl(out_directory + "user_url_1_7");
-    uumap queryRank(out_directory + "query_rank_1_7");
+    uumap queryUser(out_directory + "query_user_1_25");
+    uumap userUrl(out_directory + "user_url_1_25");
+    uumap queryRank(out_directory + "query_rank_1_25");
     std::cout << "have read counters for " << double(clock() - start) / CLOCKS_PER_SEC << " seconds ..." << std::endl;
 
     start = clock();
-    DayData dayData = read_day(out_directory + "data_by_days/9.txt");
+    DayData dayData = read_day(out_directory + "data_by_days/27.txt");
     std::cout << "have read day data for " << double(clock() - start) / CLOCKS_PER_SEC << " seconds ..." << std::endl;
 
     size_t enumerator = 0;
@@ -387,6 +388,8 @@ void Test2(std::map<size_t, size_t>& users_in_train)
     size_t numBasicMinus = 0;
     size_t numOnFirst = 0;
     size_t numNOotOnFirst = 0;
+    double my_pairs = 0;
+    double pairs = 0;
     for(const auto& item0 : dayData)
     {
         for (const auto& item1 : item0.second)
@@ -397,7 +400,7 @@ void Test2(std::map<size_t, size_t>& users_in_train)
                 std::cout << elapsedTime << ": " << enumerator << " " << "BASIC "
                           << numBasicPlus << " " << numBasicMinus << " " << (double)numBasicPlus / (numBasicPlus + numBasicMinus)
                           << " EMBEDDING " <<numPlus << " " << numMinus << " " << (double)numPlus / (numPlus + numMinus) << ";"
-                          << numOnFirst << " " << numNOotOnFirst << endl;
+                          << numOnFirst << " " << numNOotOnFirst <<" MY " << my_pairs << " " <<pairs <<endl;
             }
             // get query, person and clicked url
             size_t query = history.id;
@@ -427,9 +430,10 @@ void Test2(std::map<size_t, size_t>& users_in_train)
 
             // skip seldom queries
             if (queryUser.watch(query).size() <  10) continue;
+            //if (queryUser.watch(query).size() >  6) continue;
 
             //user not in train
-            //if (users_in_train[user] < 2) continue;
+            if (users_in_train[user] < 2) continue;
 
             // skip serps where there were not deep click
             bool found = false;
@@ -457,7 +461,13 @@ void Test2(std::map<size_t, size_t>& users_in_train)
             vector<std::pair<size_t, double> > nearest = embedding.GetNearest(user, users.size(), users);
             //if (nearest[0].second > 2) continue;
             //if (users.size() < 400) continue;
-            vector<double> evristic(10,1e-5);
+            vector<double> a;
+            for (int i = 0; i < 10; ++i)
+            {
+                a.push_back(1e-10*(i+1));
+            }
+            vector<double> evristic(a);
+            vector<double> my_evristic(a);
             // predict best rank by nearest users by summ
             int n_users = 0;
             std::map<size_t, pair<int, int>> r_one;
@@ -468,7 +478,7 @@ void Test2(std::map<size_t, size_t>& users_in_train)
                 auto nearestUser = nearest[j];
                 const unordered_map<size_t, vector<double> >& nearestUserUrls = userUrl.watch(nearestUser.first);
                 clickedBestRank = -1;
-
+                //if (users_in_train[nearestUser.first] < 2) continue;
                 for (size_t i = 0; i < 10; ++i)
                 {
                     size_t url = history.urls[i];
@@ -482,7 +492,8 @@ void Test2(std::map<size_t, size_t>& users_in_train)
                 if (clickedBestRank >= 0)
                 {
 
-                     evristic[clickedBestRank] +=  std::exp(-nearestUser.second);
+                     evristic[clickedBestRank] +=  1;//std::exp(-nearestUser.second);
+                     my_evristic[clickedBestRank] += std::exp(-nearestUser.second);
                      //std::cout << nearestUser.second << " ";
                      //if (nearestUser.second <= 2)
                          n_users += 1;
@@ -507,10 +518,77 @@ void Test2(std::map<size_t, size_t>& users_in_train)
                 }
                 //if (n_users >= 100) break;
             }
-            double evristic_summ = std::accumulate(evristic.begin(), evristic.end(), 0);
 
 
-            n_users += 1;
+ //DELETE
+//            std::vector<std::pair<double, int>> my_ev;
+//            std::vector<std::pair<double, int>> ev;
+//            for (int i =0; i < 10; ++i)
+//            {
+//                my_ev.push_back(std::pair<double,int>(my_evristic[i],i));
+//                ev.push_back(std::pair<double,int>(evristic[i],i));
+//            }
+//            std::sort(my_ev.begin(), my_ev.end(), [] (std::pair<double,int> a , std::pair<double,int> b)
+//            {
+//                return a.first > b.first;
+//            }
+//            );
+//            std::sort(ev.begin(), ev.end(), [] (std::pair<double,int> a , std::pair<double,int> b)
+//            {
+//                return a.first > b.first;
+//            }
+
+//            );
+//            double n = 1e-10;
+//            double r = 0;
+//            for (int i = 0; i < 10; ++i)
+//            {
+//                double t = history.type[ev[i].second] == 2;
+//                n += 1;
+//                r += t/ std::log2(i+2.);
+
+//            }
+//            pairs += r/n;
+//            r = 0;
+//            n = 1e-10;
+//            for (int i = 0; i < 10; ++i)
+//            {
+//                double t = history.type[my_ev[i].second] == 2;
+//                n += 1;
+//                r += t/ std::log2(i+2.);
+//            }
+//            my_pairs += r/n;
+            for (int i = 0; i < 10; ++i)
+            {
+                for (int j = i+1; j < 10; ++j)
+                {
+                    int i_t = (history.type[i] == 2);
+                    int j_t = (history.type[j] == 2);
+                    if (i_t != j_t)
+                    {
+                        if ((evristic[i_t] > evristic[j_t]) == (i_t > j_t)) pairs += 1;
+                        if ((my_evristic[i_t] > my_evristic[j_t]) == (i_t > j_t)) my_pairs += 1;
+                    }
+                }
+             }
+//            n_users += 1;
+//            for (int i = 0; i < 10; ++i)
+//            {
+//                out << evristic[i] << " ";
+//            }
+//            out << "\n";
+//            for (int i = 0; i < 10; ++i)
+//            {
+//                out << my_evristic[i] << " ";
+//            }
+//            out << "\n";
+//            for (int i = 0; i < 10; ++i)
+//            {
+//                out << history.type[i] << " ";
+//            }
+//            out << "\n\n";
+
+//END DELETE
 
             //if (n_users <  80) continue;
             //std::cout << "\n";
@@ -532,6 +610,7 @@ void Test2(std::map<size_t, size_t>& users_in_train)
                 res[bin][i].first += last.first;
                 res[bin][i].second += last.second;
             }
+
             clickedBestRank = 0;
             double max_click = evristic[0];
             for (int i = 0; i < 10; ++i)
@@ -564,17 +643,20 @@ void Test2(std::map<size_t, size_t>& users_in_train)
               << numOnFirst << " " << numNOotOnFirst << endl;
 
     std::cout << "Ready!!!" << std::endl;
-    std::ofstream out(out_directory + "/histogramms/hist_100");
-    for (auto it = res.begin(); it != res.end(); ++it)
-    {
-        out << it->first << " ";
-        for (auto it1 = it->second.begin(); it1 != it->second.end(); ++it1)
-        {
-            out << it1->second.first / (it1->second.first + it1->second.second + 1e-10) << " ";
-        }
-        out << "\n";
-    }
-    out.close();
+//    std::ofstream out(out_directory + "data_stat/histogramms/hist_100");
+//    for (auto it = res.begin(); it != res.end(); ++it)
+//    {
+//        out << it->first << " ";
+//        int last_value = 0;
+//        for (auto it1 = it->second.begin(); it1 != it->second.end(); ++it1)
+//        {
+//            out << it1->second.first / (it1->second.first + it1->second.second + 1e-10) << " ";
+//            last_value = it1->second.first + it1->second.second;
+//        }
+//        out << "\n";
+//        std::cout << last_value << "\n";
+//    }
+//    out.close();
 }
 
 int main()
@@ -594,11 +676,11 @@ int main()
     std::cout << "READY!\n"*/;
     
 //learn collaborative filtering
-//    uumap queryUser(out_directory + "query_user_1_7");
-//    uumap userUrl(out_directory + "user_url_1_7");
-//    uumap queryRank(out_directory + "query_rank_1_7");
-//    DayData dayData = read_day(out_directory + "data_by_days/8.txt");
-//    collaborative_filtering learner(-0.5, 70, out_directory + "users");
+//    uumap queryUser(out_directory + "query_user_1_25");
+//    uumap userUrl(out_directory + "user_url_1_25");
+//    uumap queryRank(out_directory + "query_rank_1_25");
+//    DayData dayData = read_day(out_directory + "data_by_days/26.txt");
+//    collaborative_filtering learner(-0.5, 100, out_directory + "users");
 //      std::vector<Example> examples;
 //      std::vector<bool> truth(10, false);
 //      truth[2] = true;
@@ -615,7 +697,7 @@ int main()
 //      {
 //        learner.One_step(examples,truth,9);
 //      }
-//    for (int i = 0; i < 3; ++i)
+//    for (int i = 0; i < 10; ++i)
 //    {
 //        //learner.rate /= (i+1);
 //        learner.Learn(queryUser, userUrl, queryRank, dayData);
@@ -626,7 +708,7 @@ int main()
 //    dayData.clear();
 //    learner.Print(out_directory + "embedding/model");
 
-    std::map<size_t, size_t> users_in_train;// =  Get_number_trainig_example_with_user(out_directory + "data_stat/pairs_26");
+    std::map<size_t, size_t> users_in_train =  Get_number_trainig_example_with_user(out_directory + "data_stat/pairs_26");
     Test2(users_in_train);
 
 
