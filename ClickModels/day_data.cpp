@@ -2,6 +2,7 @@
 
 void separate_by_day(const string& file, const string& outFolder)
 {
+    std::cout << "run reading file " << file << std::endl;
     vector<ofstream*> outs;
     for (size_t i = 0; i < 30; ++i)
     {
@@ -32,6 +33,7 @@ void separate_by_day(const string& file, const string& outFolder)
         outs[i]->close();
         delete outs[i];
     }
+    std::cout << "end reading file " << file << std::endl;
 }
 
 DayData read_day(const string& file)

@@ -101,6 +101,7 @@ std::vector<double> collaborative_filtering::res_one_position(const std::vector<
 }
 
 static size_t enumerator = 0;
+static size_t correct_answers = 0;
 
 double LogLikelihood(const std::vector<bool>& truth, const std::vector<double>& position_distribution, double sum)
 {
@@ -120,81 +121,135 @@ double LogLikelihood(const std::vector<bool>& truth, const std::vector<double>& 
 
 }
 
-void collaborative_filtering::One_step(const std::vector<Example>& examples, 
+double Cost(double x, double y)
+{
+    double del = 1./ (1 + std::exp(-(x-y)));
+    if (del < 1e-5) del = 1e-5;
+    return std::log(del);
+}
+
+double DivCost(double x, double y)
+{
+    return -1./ (1 + std::exp(-(x-y)));
+}
+
+int Correct_answer(const std::vector<double>& stat, const std::vector<bool>& truth)
+{
+   double max_stat = stat[0]-1;
+   int res = 0;
+   for (int i = 0; i < 10; ++i)
+   {
+       if (stat[i] > max_stat)
+       {
+           max_stat = stat[i];
+           res = truth[i];
+       }
+   }
+   return res;
+}
+
+void collaborative_filtering::One_step(const std::vector<Example>& examples,
                                        const std::vector<bool>& truth,
                                        size_t user)
 {
     ++enumerator;
-    std::vector<double> new_vector_for_user(dim,0.);
+    std::vector<double> new_vector_for_user(dim, 0.);
     std:vector<double> position_distribution = res_one_position(examples, user);
-//    for (int i = 0; i < 10; ++i)
-//    {
-//        std::cout << position_distribution[i] << " ";
-//    }
-//    std::cout << "\n";
-
+    std::vector<double> coeffs(10, 0.);
+    correct_answers += Correct_answer(position_distribution, truth);
     double sum_all = std::accumulate(position_distribution.begin(), position_distribution.end(), 0.);
-    double loglikeihood_before = LogLikelihood(truth, position_distribution, sum_all);
+    for (int rang = 0; rang < 10; ++rang)
+    {
+        int rang_truth = truth[rang];
+        for (int rang1 = 0; rang1 < 10; ++rang1)
+        {
+            int rang1_truth = truth[rang1];
+            if (rang_truth != rang1_truth)
+            {
+                double d_cost = DivCost(position_distribution[rang] / sum_all, position_distribution[rang1] / sum_all);
+                double rang_coeff  = (sum_all - position_distribution[rang]) / (sum_all * sum_all);
+                rang_coeff += position_distribution[rang1] / (sum_all * sum_all);
+                double rang1_coeff = (sum_all - position_distribution[rang1]) / (sum_all * sum_all);
+                rang_coeff += position_distribution[rang] / (sum_all * sum_all);
+                if (rang_truth > rang1_truth)
+                {
+                    coeffs[rang] += d_cost * rang_coeff;
+                    coeffs[rang1] += d_cost * rang1_coeff;
+                }
+                else
+                {
+                    coeffs[rang] -= d_cost * rang_coeff;
+                    coeffs[rang1] -= d_cost * rang1_coeff;
+                }
+
+            }
+        }
+    }
+
+
+
+
     for (size_t i = 0; i < examples.size(); ++i)
     {
-        double coeff = -10./ sum_all;
-        for (size_t rang = 0; rang < 10; ++rang)
-        {
-            bool x = truth[rang];
-            if (rang == examples[i].rang_click_document)
-            {
 
-                if (x)
-                {
-                    coeff += 1./ (position_distribution[rang]);
-                    if (coeff != coeff)
-                    {
-                        std::cout << coeff << " " << position_distribution[rang] << "POSITION" << " ";
-                        std::exit(0);
-                    }
-                }
-            }
-            else
-            {
-                if (!x)
-                {
-                    coeff += 1/(sum_all - position_distribution[rang]);
-                    if (coeff != coeff)
-                    {
-                       std::cout << coeff << " " << position_distribution[rang] << "POSITION" << " ";
-                       std::exit(0);
-                    }
-                }
-            }
-        }
-        double megarate = coeff * rate;
-        if (std::isinf(megarate) || std::isnan(megarate))
-        {
-            std::cout << enumerator << std::endl;
-            std::cout << "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ" << std::endl;
-        }
-        summ(new_vector_for_user, f.divSimilarity(embedding[user], embedding[examples[i].user]), coeff * rate);
-        summ(embedding[examples[i].user], f.divSimilarity(embedding[examples[i].user], embedding[user]), coeff * rate);
-//        summ(embedding[user], new_vector_for_user, 1);
-//        std::vector<double> position_distribution_after = res_one_position(examples, user);
-//        double summ_all_after = std::accumulate(position_distribution_after.begin(), position_distribution_after.end(), 0.);
-//        double loglikeihood_after = LogLikelihood(truth, position_distribution_after, summ_all_after);
-//        std::cout << loglikeihood_before << " " << loglikeihood_after << "\n";
-//        summ(embedding[user], new_vector_for_user, 1);
+        summ(new_vector_for_user, f.divSimilarity(embedding[user], embedding[examples[i].user]), coeffs[examples[i].rang_click_document] * rate);
+        summ(embedding[examples[i].user], f.divSimilarity(embedding[examples[i].user], embedding[user]),
+                coeffs[examples[i].rang_click_document] * rate);
     }
    summ(embedding[user], new_vector_for_user, 1.);
-
-    std::vector<double> position_distribution_after = res_one_position(examples, user);
-    double summ_all_after = std::accumulate(position_distribution_after.begin(), position_distribution_after.end(), 0.);
-    double loglikeihood_after = LogLikelihood(truth, position_distribution_after, summ_all_after);
-    //if (loglikeihood_before > loglikeihood_after)
-//    {
-//        std::cout << loglikeihood_before << " " << loglikeihood_after << "\n";
-//    }
 }
+
+
+//void collaborative_filtering::One_step(const std::vector<Example>& examples,
+//                                       const std::vector<bool>& truth,
+//                                       size_t user)
+//{
+//    ++enumerator;
+//    std::vector<double> new_vector_for_user(dim,0.);
+//    std:vector<double> position_distribution = res_one_position(examples, user);
+//    double sum_all = std::accumulate(position_distribution.begin(), position_distribution.end(), 0.);
+//    double loglikeihood_before = LogLikelihood(truth, position_distribution, sum_all);
+//    for (size_t i = 0; i < examples.size(); ++i)
+//    {
+//        double coeff = -10./ sum_all;
+//        for (size_t rang = 0; rang < 10; ++rang)
+//        {
+//            bool x = truth[rang];
+//            if (rang == examples[i].rang_click_document)
+//            {
+
+//                if (x)
+//                {
+//                    coeff += 1./ (position_distribution[rang]);
+//                    if (coeff != coeff)
+//                    {
+//                        std::cout << coeff << " " << position_distribution[rang] << "POSITION" << " ";
+//                        std::exit(0);
+//                    }
+//                }
+//            }
+//            else
+//            {
+//                if (!x)
+//                {
+//                    coeff += 1/(sum_all - position_distribution[rang]);
+//                    if (coeff != coeff)
+//                    {
+//                       std::cout << coeff << " " << position_distribution[rang] << "POSITION" << " ";
+//                       std::exit(0);
+//                    }
+//                }
+//            }
+//        }
+//        double megarate = coeff * rate;
+//        summ(new_vector_for_user, f.divSimilarity(embedding[user], embedding[examples[i].user]), coeff * rate);
+//    }
+//   summ(embedding[user], new_vector_for_user, 1.);
+//}
 
 void collaborative_filtering::Learn(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, DayData& dayData)
 {
+    correct_answers = 0;
     std::cout << "Run Learn" << endl;
     size_t numPlus = 0;
     size_t numMinus = 0;
@@ -287,6 +342,7 @@ void collaborative_filtering::Learn(const uumap& queryUser, const uumap& userUrl
             One_step(examples, truth, user);
         }
     }
+    std::cout << correct_answers << std::endl;
     std::cout << "Ready!!!" << std::endl;
 }
 
