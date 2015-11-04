@@ -1,5 +1,6 @@
 #include "collaborative_filtering.h"
 
+
 double similarity(const std::vector<double>& x,const std::vector<double>& y)
 {
     double res = 0;
@@ -62,6 +63,7 @@ collaborative_filtering::collaborative_filtering(double rate_, int dim_, const s
             item = distribution(generator);
         }
     }
+    res_file.open("/home/anna/Рабочий стол/work/data/histogramms/result.txt");
 }
 
 void summ(std::vector<double>& x, const std::vector<double>&y, double rate)
@@ -330,6 +332,222 @@ void collaborative_filtering::Learn(const uumap& queryUser, const uumap& userUrl
     }
     std::cout << correct_answers << std::endl;
     std::cout << "Ready!!!" << std::endl;
+}
+
+void collaborative_filtering::Learn_by_several_daya(const std::string& pathToData, int start_learning_day, int end_learning_day)
+{
+    Counters counters;
+    for (int i = 1; i < start_learning_day; ++i)
+    {
+        DayData dayData = read_day(pathToData +"data_by_days/" +std::to_string(i) + ".txt");
+        std::cout << "End reading " << i <<  "day\n";
+        calculate_counters(dayData, counters);
+    }
+    std::cout << "Run_Learning\n";
+    for (int i = start_learning_day; i < end_learning_day; ++i)
+    {
+         DayData dayData = read_day(pathToData + "data_by_days/"+ std::to_string(i) + ".txt");
+         Learn(counters.query_user, counters.user_url, counters.query_rank, dayData);
+         calculate_counters(dayData, counters);
+         std::cout << "Run Print to file\n";
+         Print(pathToData + "embedding/model" + std::to_string(i));
+         std::cout << "End Print to file\n";
+         Test(counters.query_user, counters.user_url, counters.query_rank, i+1, pathToData);
+    }
+
+}
+
+void collaborative_filtering::Test(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day,
+                                   const std::string& pathToData)
+{
+    std::cout << "Run TEST On day " << test_day << std::endl;
+    DayData dayData = read_day(pathToData + "data_by_days/"+ std::to_string(12) + ".txt");
+    size_t enumerator = 0;
+    size_t numPlus = 0;
+    size_t numMinus = 0;
+    size_t numMyPlus = 0;
+    size_t numMyMinus = 0;
+    size_t numBasicPlus = 0;
+    size_t numBasicMinus = 0;
+    size_t numOnFirst = 0;
+    size_t numNOotOnFirst = 0;
+    double my_pairs = 0;
+    double pairs = 0;
+    Embedding embedding1(pathToData + + "embedding/model" + std::to_string(test_day-1), dim);
+
+
+    clock_t start = clock();
+    for(const auto& item0 : dayData)
+    {
+        for (const auto& item1 : item0.second)
+        {
+            const Query& history = item1.second;
+            if (++enumerator % 10000 == 0) {
+                double elapsedTime = (double)(clock() - start) / CLOCKS_PER_SEC;
+                std::cout << elapsedTime << ": " << enumerator << " " << "BASIC "
+                          << numBasicPlus << " " << numBasicMinus << " " << (double)numBasicPlus / (numBasicPlus + numBasicMinus)
+                          << " EMBEDDING " <<numPlus << " " << numMinus << " " << (double)numPlus / (numPlus + numMinus) << ";"
+                          << " MY_EMBEDDING " <<numMyPlus << " " << numMyMinus << " " << (double)numMyPlus / (numMyPlus + numMyMinus) << ";"
+                          << " MY " << my_pairs << " " <<pairs <<endl;
+            }
+            // get query, person and clicked url
+            size_t query = history.id;
+            size_t user = history.person;
+            size_t url = -1;
+
+            // first evristic skip data (if first rank is twice more than second then skip)
+            const vector<double>& rank0 = queryRank.watch(query, 0);
+            const vector<double>& rank1 = queryRank.watch(query, 1);
+            if (rank0.size() > 0 && (rank1.size() == 0 || rank0[0] >= 2 * rank1[0]))
+            {
+                continue;
+            }
+
+            // second evristic skip data (skip urls which this user has already seen)
+            bool should_break = false;
+            for (size_t i = 0; i < 10; ++i)
+            {
+                const vector<double>& found = userUrl.watch(user, history.urls[i]);
+                if (found.size() > 0 && found[0] > 1 - 1e-5)
+                {
+                    should_break = true;
+                    break;
+                }
+            }
+            if (should_break) continue;
+
+            // skip seldom queries
+            if (queryUser.watch(query).size() <  10) continue;
+            //if (queryUser.watch(query).size() >  6) continue;
+
+            //user not in train
+            //if (users_in_train[user] < 2) continue;
+
+            // skip serps where there were not deep click
+            bool found = false;
+            for (size_t i = 0; i < 10; ++i)
+            {
+                if(history.type[i] == 2)
+                {
+                    found = true;
+                    url = history.urls[i];
+                    break;
+                }
+            }
+            if (!found) continue;
+
+            // get users which inserted this query
+            const unordered_map<size_t, vector<double> >& users_map = queryUser.watch(query);
+            unordered_set<size_t> users;
+            for (auto& item : users_map)
+            {
+                users.insert(item.first);
+            }
+
+            // get nearest user
+            int clickedBestRank = -1;
+            vector<std::pair<size_t, double> > nearest = embedding1.GetNearest(user, users.size(), users);
+            vector<double> a;
+            for (int i = 0; i < 10; ++i)
+            {
+                a.push_back(1e-10*(10.-i));
+            }
+            vector<double> evristic(a);
+            vector<double> my_evristic(a);
+            // predict best rank by nearest users by summ
+            int n_users = 0;
+            std::map<size_t, pair<int, int>> r_one;
+            //std::shuffle(nearest.begin(), nearest.end(), std::default_random_engine(0));
+            std::pair<int, int> last(0, 0);
+            for (size_t j = 0; j < std::min(size_t(400000), nearest.size()); ++j)
+            {
+                auto nearestUser = nearest[j];
+                const unordered_map<size_t, vector<double> >& nearestUserUrls = userUrl.watch(nearestUser.first);
+                clickedBestRank = -1;
+                for (size_t i = 0; i < 10; ++i)
+                {
+                    size_t url = history.urls[i];
+                    auto found = nearestUserUrls.find(url);
+                    if (found != nearestUserUrls.end() && found->second.size() > 0)
+                    {
+                        clickedBestRank = i;
+                        break;
+                    }
+                }
+                if (clickedBestRank >= 0)
+                {
+
+                     evristic[clickedBestRank] +=  1;//std::exp(-nearestUser.second);
+                     my_evristic[clickedBestRank] += std::exp(-nearestUser.second);
+                }
+            }
+
+
+            for (int i = 0; i < 10; ++i)
+            {
+                for (int j = i+1; j < 10; ++j)
+                {
+                    int i_t = (history.type[i] == 2);
+                    int j_t = (history.type[j] == 2);
+                    if (i_t != j_t)
+                    {
+                        if ((evristic[i_t] > evristic[j_t]) == (i_t > j_t)) pairs += 1;
+                        if ((my_evristic[i_t] > my_evristic[j_t]) == (i_t > j_t)) my_pairs += 1;
+                    }
+                }
+             }
+
+            clickedBestRank = 0;
+            int clickedBestRankMy = 0;
+
+            double max_click = evristic[0];
+            double my_max_click = my_evristic[0];
+
+            for (int i = 0; i < 10; ++i)
+            {
+                if (max_click < evristic[i])
+                {
+                    clickedBestRank = i;
+                    max_click = evristic[i];
+                }
+                if (my_max_click < my_evristic[i])
+                {
+                    clickedBestRankMy = i;
+                    my_max_click = my_evristic[i];
+                }
+            }
+            // calculate statistics
+            if (history.type[clickedBestRank] == 2) {
+                ++numPlus;
+            } else {
+                ++numMinus;
+            }
+            if (history.type[clickedBestRankMy] == 2) {
+                ++numMyPlus;
+            } else {
+                ++numMyMinus;
+            }
+            if (history.type[0] == 2) {
+                ++numBasicPlus;
+            } else {
+                ++numBasicMinus;
+            }
+        }
+    }
+    std::cout <<"BASIC "
+              << numBasicPlus << " " << numBasicMinus << " " << (double)numBasicPlus / (numBasicPlus + numBasicMinus)
+              << " EMBEDDING " <<numPlus << " " << numMinus << " " << (double)numPlus / (numPlus + numMinus) << ";"
+              << " MY_EMBEDDING " <<numMyPlus << " " << numMyMinus << " " << (double)numMyPlus / (numMyPlus + numMyMinus) << ";"
+              << " MY " << my_pairs << " " <<pairs <<endl;
+
+    res_file << "BASIC "
+             << numBasicPlus << " " << numBasicMinus << " " << (double)numBasicPlus / (numBasicPlus + numBasicMinus)
+             << " EMBEDDING " <<numPlus << " " << numMinus << " " << (double)numPlus / (numPlus + numMinus) << ";"
+             << " MY_EMBEDDING " <<numMyPlus << " " << numMyMinus << " " << (double)numMyPlus / (numMyPlus + numMyMinus) << ";\n";
+
+    std::cout << "Ready!!!" << std::endl;
+
+    std::cout << "END TEST On day " << test_day << std::endl;
 }
 
 void collaborative_filtering::Print(const string& file) const

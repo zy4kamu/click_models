@@ -13,8 +13,8 @@
 //void GetHistogramm(MyLearner& learner, int step);
 
 //string out_directory = "/home/stepan/click_models_data/";
-string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
-//string out_directory = "/home/anna/Рабочий стол/work/data/";
+//string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+static string out_directory = "/home/anna/Рабочий стол/work/data/";
 
 
 void RandomPermutationOfPairs(const string& fileIn, const string& fileOut)
@@ -39,7 +39,7 @@ void RandomPermutationOfPairs(const string& fileIn, const string& fileOut)
 
 void Test(MyLearner& learner)
 {
-    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+    //string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
     uumap queryUser(out_directory + "query_user_1_25");
     uumap userUrl(out_directory + "user_url_1_25");
     uumap queryRank(out_directory + "query_rank_1_25");
@@ -153,7 +153,7 @@ void Test(MyLearner& learner)
 
 void Test1(MyLearner& learner,int day)
 {
-    string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+    //string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
     uumap queryUser(out_directory + "query_user_1_" + std::to_string(day));
     uumap userUrl(out_directory + "user_url_1_" + std::to_string(day));
     uumap queryRank(out_directory + "query_rank_1_" + std::to_string(day));
@@ -680,7 +680,7 @@ int main()
 //    uumap userUrl(out_directory + "user_url_1_25");
 //    uumap queryRank(out_directory + "query_rank_1_25");
 //    DayData dayData = read_day(out_directory + "data_by_days/26.txt");
-//    collaborative_filtering learner(-0.5, 100, out_directory + "users");
+    collaborative_filtering learner(-0.1, 20, out_directory + "users");
 //      std::vector<Example> examples;
 //      std::vector<bool> truth(10, false);
 //      truth[2] = true;
@@ -697,19 +697,20 @@ int main()
 //      {
 //        learner.One_step(examples,truth,9);
 //      }
-//    for (int i = 0; i < 10; ++i)
-//    {
-//        //learner.rate /= (i+1);
-//        learner.Learn(queryUser, userUrl, queryRank, dayData);
-//    }
+    for (int i = 0; i < 10; ++i)
+    {
+        //learner.rate /= (i+1);
+        std::cout << " N ITERATION " << i << std::endl;
+        learner.Learn_by_several_daya(out_directory,8,12);
+    }
 //    queryUser.clear();
 //    userUrl.clear();
 //    queryRank.clear();
 //    dayData.clear();
-//    learner.Print(out_directory + "embedding/model");
+    learner.Print(out_directory + "embedding/model");
 
-    std::map<size_t, size_t> users_in_train =  Get_number_trainig_example_with_user(out_directory + "data_stat/pairs_26");
-    Test2(users_in_train);
+//    std::map<size_t, size_t> users_in_train =  Get_number_trainig_example_with_user(out_directory + "data_stat/pairs_26");
+//    Test2(users_in_train);
 
 
 

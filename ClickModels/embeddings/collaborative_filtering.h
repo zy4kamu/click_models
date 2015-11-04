@@ -10,6 +10,8 @@
 #include "FileReader.h"
 #include "../uumap.h"
 #include "../day_data.h"
+#include "../counters.h"
+#include "Embedding.h"
 
 
 
@@ -40,6 +42,7 @@ private:
 
     int dim;
     std::unordered_map<size_t, std::vector<double>> embedding;
+    std::ofstream res_file;
     Similarity_function f;
 private:
     std::vector<double> res_one_position(const std::vector<Example>& examples, size_t user) const;
@@ -50,8 +53,10 @@ public:
     void One_step(const std::vector<Example>& examples,
                                            const std::vector<bool>& truth,
                                            size_t user);
+    void Learn_by_several_daya(const std::string& pathToData, int start_learning_day, int end_learning_day);
+    void Test(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day, const std::string& pathToData);
     void Print(const string& file) const;
-    double rate;;
+    double rate;
 };
 
 #endif // COLLABORATIVE_FILTERING_H

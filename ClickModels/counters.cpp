@@ -3,7 +3,7 @@
 Counters counters;
 
 //string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
-string out_directory = "/home/anna/Рабочий стол/work/data/";
+static string out_directory = "/home/anna/Рабочий стол/work/data/";
 
 Counters::Counters()
     : query_url("/tmp/query_url")
