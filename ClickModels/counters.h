@@ -14,6 +14,11 @@ struct Counters
     Counters();
     void clear();
     void save(size_t start_day, size_t finish_day);
+    void Set_query_url(uumap& query_url_);
+    void Set_user_url(uumap& user_url_);
+    void Set_user_rank(uumap& user_rank_);
+    void Set_query_user(uumap& query_user_);
+    void Set_query_rank(uumap& query_rank_);
 };
 
 extern Counters counters;

@@ -13,8 +13,8 @@
 //void GetHistogramm(MyLearner& learner, int step);
 
 //string out_directory = "/home/stepan/click_models_data/";
-//string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
-static string out_directory = "/home/anna/Рабочий стол/work/data/";
+static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+//static string out_directory = "/home/anna/Рабочий стол/work/data/";
 
 
 void RandomPermutationOfPairs(const string& fileIn, const string& fileOut)
@@ -520,76 +520,6 @@ void Test2(std::map<size_t, size_t>& users_in_train)
             }
 
 
- //DELETE
-//            std::vector<std::pair<double, int>> my_ev;
-//            std::vector<std::pair<double, int>> ev;
-//            for (int i =0; i < 10; ++i)
-//            {
-//                my_ev.push_back(std::pair<double,int>(my_evristic[i],i));
-//                ev.push_back(std::pair<double,int>(evristic[i],i));
-//            }
-//            std::sort(my_ev.begin(), my_ev.end(), [] (std::pair<double,int> a , std::pair<double,int> b)
-//            {
-//                return a.first > b.first;
-//            }
-//            );
-//            std::sort(ev.begin(), ev.end(), [] (std::pair<double,int> a , std::pair<double,int> b)
-//            {
-//                return a.first > b.first;
-//            }
-
-//            );
-//            double n = 1e-10;
-//            double r = 0;
-//            for (int i = 0; i < 10; ++i)
-//            {
-//                double t = history.type[ev[i].second] == 2;
-//                n += 1;
-//                r += t/ std::log2(i+2.);
-
-//            }
-//            pairs += r/n;
-//            r = 0;
-//            n = 1e-10;
-//            for (int i = 0; i < 10; ++i)
-//            {
-//                double t = history.type[my_ev[i].second] == 2;
-//                n += 1;
-//                r += t/ std::log2(i+2.);
-//            }
-//            my_pairs += r/n;
-            for (int i = 0; i < 10; ++i)
-            {
-                for (int j = i+1; j < 10; ++j)
-                {
-                    int i_t = (history.type[i] == 2);
-                    int j_t = (history.type[j] == 2);
-                    if (i_t != j_t)
-                    {
-                        if ((evristic[i_t] > evristic[j_t]) == (i_t > j_t)) pairs += 1;
-                        if ((my_evristic[i_t] > my_evristic[j_t]) == (i_t > j_t)) my_pairs += 1;
-                    }
-                }
-             }
-//            n_users += 1;
-//            for (int i = 0; i < 10; ++i)
-//            {
-//                out << evristic[i] << " ";
-//            }
-//            out << "\n";
-//            for (int i = 0; i < 10; ++i)
-//            {
-//                out << my_evristic[i] << " ";
-//            }
-//            out << "\n";
-//            for (int i = 0; i < 10; ++i)
-//            {
-//                out << history.type[i] << " ";
-//            }
-//            out << "\n\n";
-
-//END DELETE
-
             //if (n_users <  80) continue;
             //std::cout << "\n";
             int bin = Get_bin(n_users);
@@ -680,7 +610,7 @@ int main()
 //    uumap userUrl(out_directory + "user_url_1_25");
 //    uumap queryRank(out_directory + "query_rank_1_25");
 //    DayData dayData = read_day(out_directory + "data_by_days/26.txt");
-    collaborative_filtering learner(-0.1, 20, out_directory + "users");
+    collaborative_filtering learner(-1., 20, out_directory + "users");
 //      std::vector<Example> examples;
 //      std::vector<bool> truth(10, false);
 //      truth[2] = true;
@@ -697,11 +627,11 @@ int main()
 //      {
 //        learner.One_step(examples,truth,9);
 //      }
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < 100; ++i)
     {
         //learner.rate /= (i+1);
         std::cout << " N ITERATION " << i << std::endl;
-        learner.Learn_by_several_daya(out_directory,8,12);
+        learner.Learn_by_several_daya(out_directory,25,27);
     }
 //    queryUser.clear();
 //    userUrl.clear();

@@ -2,8 +2,8 @@
 
 Counters counters;
 
-//string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
-static string out_directory = "/home/anna/Рабочий стол/work/data/";
+static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+//static string out_directory = "/home/anna/Рабочий стол/work/data/";
 
 Counters::Counters()
     : query_url("/tmp/query_url")
@@ -12,6 +12,27 @@ Counters::Counters()
     , query_user("/tmp/query_user")
     , query_rank("/tmp/query_rank")
 {
+}
+
+void Counters::Set_query_url(uumap& query_url_)
+{
+    query_url = query_url_;
+}
+void Counters::Set_user_url(uumap& user_url_)
+{
+    user_url = user_url_;
+}
+void Counters::Set_user_rank(uumap& user_rank_)
+{
+    user_rank = user_rank_;
+}
+void Counters::Set_query_user(uumap& query_user_)
+{
+    query_user = query_user_;
+}
+void Counters::Set_query_rank(uumap& query_rank_)
+{
+    query_rank = query_rank_;
 }
 
 void Counters::clear()

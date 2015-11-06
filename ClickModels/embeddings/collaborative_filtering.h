@@ -6,6 +6,7 @@
 #include<numeric>
 #include<random>
 #include<math.h>
+#include <thread>
 #include "FileWriter.h"
 #include "FileReader.h"
 #include "../uumap.h"
@@ -35,6 +36,21 @@ public:
     Example(size_t u, size_t r): user(u), rang_click_document(r) {}
 };
 
+struct VectorWithLoc
+{
+    std::vector<double>& v;
+    std::mutex m;
+    VectorWithLoc(std::vector<double>& v) : v(v) {}
+};
+
+struct Result
+{
+    size_t corect_pairs;
+    size_t right_answers;
+    size_t wrong_answers;
+    Result(): corect_pairs(0), right_answers(0), wrong_answers(0) {}
+};
+
 //probability to buy something sum(sim(u,u_i)*f) 
 class collaborative_filtering
 {
@@ -53,8 +69,17 @@ public:
     void One_step(const std::vector<Example>& examples,
                                            const std::vector<bool>& truth,
                                            size_t user);
+    void One_step1( const std::vector<std::vector<Example>>& examples,
+                                            const std::vector<std::vector<bool>>& truth,
+                                            const std::vector<size_t>& users,
+                                            size_t coreIndex, size_t numCores);
     void Learn_by_several_daya(const std::string& pathToData, int start_learning_day, int end_learning_day);
     void Test(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day, const std::string& pathToData);
+    void TestOneEx(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history, Result& ev, Result& my);
+    void TestOneEx1(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank,
+                                             const std::vector<Query>& dayDataVec,
+                                             Result& ev, Result& my,
+                                             size_t coreIndex, size_t numCores);
     void Print(const string& file) const;
     double rate;
 };
