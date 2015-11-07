@@ -370,9 +370,9 @@ void collaborative_filtering::Learn_by_several_daya(const std::string& pathToDat
     }*/
 
     clock_t start = clock();
-    uumap queryUser(pathToData + "query_user_1_24");
-    uumap userUrl(pathToData + "user_url_1_24");
-    uumap queryRank(pathToData + "query_rank_1_24");
+    uumap queryUser(pathToData + "query_user_1_25");
+    uumap userUrl(pathToData + "user_url_1_25");
+    uumap queryRank(pathToData + "query_rank_1_25");
     counters.Set_user_url(userUrl);
     userUrl.clear();
     counters.Set_query_user(queryUser);
@@ -387,7 +387,7 @@ void collaborative_filtering::Learn_by_several_daya(const std::string& pathToDat
          DayData dayData = read_day(pathToData + "data_by_days/"+ std::to_string(i) + ".txt");
          rate *= 1./ (i + 1 - start_learning_day);
          if (std::abs(rate) < 0.05) rate = -0.05;
-         for (int j = 0; j <  10; ++j)
+         for (int j = 0; j <  1; ++j)
          {
             Learn(counters.query_user, counters.user_url, counters.query_rank, dayData);
          }
@@ -581,8 +581,16 @@ void collaborative_filtering::Test(const uumap& queryUser, const uumap& userUrl,
         ev.right_answers += results[i]->right_answers;
         ev.wrong_answers += results[i]->wrong_answers;
     }
-
-
+    for (auto it = results.begin(); it < results.end(); ++it)
+    {
+        delete *it;
+    }
+    results.clear();
+    for (auto it = my_results.begin(); it < my_results.end(); ++it)
+    {
+        delete *it;
+    }
+    my_results.clear();
    auto end = std::chrono::system_clock::now();
     res_file << " EMBEDDING " << ev.right_answers << " " << ev.wrong_answers << " " << (double)ev.right_answers / (ev.wrong_answers + ev.right_answers) << ";"
              << " MY_EMBEDDING " << my.right_answers << " " << my.wrong_answers << " " << (double)my.right_answers / (my.wrong_answers + my.right_answers) << ";\n"
