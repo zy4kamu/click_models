@@ -65,6 +65,9 @@ private:
 
 public:
     collaborative_filtering(double rate_, int dim_, const string& usersFile);
+    void LearnOneEx(const Query& history, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank);
+    void LearnOneEx1(const std::vector<Query>& dayDataVec, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank,
+                                             size_t coreIndex, size_t numCores);
     void Learn(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, DayData& dayData);
     void One_step(const std::vector<Example>& examples,
                                            const std::vector<bool>& truth,

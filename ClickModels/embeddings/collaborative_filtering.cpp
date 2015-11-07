@@ -76,6 +76,21 @@ void summ(VectorWithLoc& x, const std::vector<double>&y, double rate)
     }
 }
 
+vector<Query> DayDataToVec(const DayData& day)
+{
+    std::cout << "Run DayData to Vec\n";
+    std::vector<Query> data;
+    for(const auto& item0 : day)
+    {
+        for (const auto& item1 : item0.second)
+        {
+            data.push_back(item1.second);
+        }
+    }
+    std::cout << "End DayData to Vec\n";
+    return data;
+}
+
 std::vector<double> collaborative_filtering::res_one_position(const std::vector<Example>& examples, size_t user) const
 {
     std::vector<double> res(10, 1e-5);
@@ -244,157 +259,115 @@ void collaborative_filtering::One_step1( const std::vector<std::vector<Example>>
 //    }
 //   summ(embedding[user], new_vector_for_user, 1.);
 //}
+void collaborative_filtering::LearnOneEx1(const std::vector<Query>& dayDataVec, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank,
+                                         size_t coreIndex, size_t numCores)
+{
+    for (size_t i = coreIndex; i < dayDataVec.size(); i += numCores)
+    {
+        LearnOneEx(dayDataVec[i], queryUser, userUrl, queryRank);
+    }
+}
+
+void collaborative_filtering::LearnOneEx(const Query& history, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank)
+{
+
+    std::vector<bool> truth(10, false);
+    // get query, person and clicked url
+    size_t query = history.id;
+    size_t user = history.person;
+    size_t url = -1;
+
+    //first filter
+    const vector<double>& rank0 = queryRank.watch(query, 0);
+    const vector<double>& rank1 = queryRank.watch(query, 1);
+    if (rank0.size() > 0 && (rank1.size() == 0 || rank0[0] >= 2 * rank1[0])) return;
+
+    //second filter
+    for (size_t i = 0; i < 10; ++i)
+   {
+       const vector<double>& found = userUrl.watch(user, history.urls[i]);
+       if (found.size() > 0 && found[0] > 1 - 1e-5)
+       {
+           return;
+       }
+   }
+
+
+    //third_filter
+    bool found = false;
+    for (size_t i = 0; i < 10; ++i)
+    {
+        if(history.type[i] == 2)
+        {
+            found = true;
+            truth[i] = true;
+        }
+    }
+    if (!found) return;
+
+    //forth filter
+     if (queryUser.watch(query).size() < 10) return;
+     const unordered_map<size_t, vector<double> >& users = queryUser.watch(query);
+
+     //Statistics
+     std::vector<Example> examples;
+     for (auto& item : users)
+     {
+
+        size_t similarUserUrl = -1;
+        size_t similarUser = item.first;
+        if (similarUser == user) continue;
+        if (item.second.size() == 0) continue;
+        bool found = false;
+        for (size_t i = 0; i < 10; ++i)
+        {
+            const vector<double>& urls = userUrl.watch(similarUser, history.urls[i]);
+            if (urls.size() > 0)
+            {
+                found = true;
+                similarUserUrl = i;
+                break;
+            }
+        }
+        if (!found) continue;
+        if (user == similarUser) continue;
+        examples.push_back(Example(similarUser, similarUserUrl));
+    }
+     One_step(examples, truth, user);
+
+}
 
 void collaborative_filtering::Learn(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, DayData& dayData)
 {
-    correct_answers = 0;
-    std::cout << "Run Learn" << endl;
-    size_t numPlus = 0;
-    size_t numMinus = 0;
-    size_t enumerator = 0;
     clock_t start = clock();
-
-    std::vector<size_t> users_;
-    std::vector<std::vector<Example>> examples_;
-    std::vector<std::vector<bool>> truth_;
-    int n_examples = 0;
-
-    for(const auto& item0 : dayData)
-    {
-        for (const auto& item1 : item0.second)
-        {
-            std::vector<bool> truth(10, false);
-
-            const Query& history = item1.second;
-            if (++enumerator % 10000 == 0)
-            {
-                double elapsedTime = (double)(clock() - start) / CLOCKS_PER_SEC;
-                std::cout << elapsedTime << ": " << enumerator << " " << numPlus << " " << numMinus << " " << (double)numPlus / (numPlus + numMinus) << std::endl;
-            }
-            // get query, person and clicked url
-            size_t query = history.id;
-            size_t user = history.person;
-            size_t url = -1;
-
-            //first filter
-            const vector<double>& rank0 = queryRank.watch(query, 0);
-            const vector<double>& rank1 = queryRank.watch(query, 1);
-            if (rank0.size() > 0 && (rank1.size() == 0 || rank0[0] >= 2 * rank1[0]))
-            {
-                continue;
-            }
-
-            //second filter
-            bool should_break = false;
-            for (size_t i = 0; i < 10; ++i)
-            {
-                const vector<double>& found = userUrl.watch(user, history.urls[i]);
-                if (found.size() > 0 && found[0] > 1 - 1e-5)
-                {
-                    should_break = true;
-                    break;
-                }
-            }
-            if (should_break) continue;
-
-            //third_filter
-            bool found = false;
-            for (size_t i = 0; i < 10; ++i)
-            {
-                if(history.type[i] == 2)
-                {
-                    found = true;
-                    truth[i] = true;
-                }
-            }
-            if (!found) continue;
-
-            //forth filter
-            if (queryUser.watch(query).size() < 10) continue;
-            const unordered_map<size_t, vector<double> >& users = queryUser.watch(query);
-
-            //Statistics
-            std::vector<Example> examples;
-            for (auto& item : users)
-            {
-
-                size_t similarUserUrl = -1;
-                size_t similarUser = item.first;
-                if (similarUser == user) continue;
-                if (item.second.size() == 0) continue;
-                bool found = false;
-                for (size_t i = 0; i < 10; ++i)
-                {
-                    const vector<double>& urls = userUrl.watch(similarUser, history.urls[i]);
-                    if (urls.size() > 0)
-                    {
-                        found = true;
-                        similarUserUrl = i;
-                        break;
-                    }
-                }
-                if (!found) continue;
-                if (user == similarUser) continue;
-                if (random()%2 == 0)
-                {
-                    examples.push_back(Example(similarUser, similarUserUrl));
-                }
-                if (history.type[similarUserUrl] == 2) {
-                    ++numPlus;
-
-                } else {
-                    ++numMinus;
-                }
-            }
-            ++n_examples;
-            examples_.push_back(examples);
-            users_.push_back(user);
-            truth_.push_back(truth);
-            if (n_examples > 20000)
-            {
-                std::vector<std::thread> threads;
-                size_t numThreads = 7;
-                for (size_t i = 0; i < numThreads; ++i)
-                {
-                    std::thread t(&collaborative_filtering::One_step1, this, std::ref(examples_), std::ref(truth_), std::ref(users_), i, numThreads);
-                    threads.push_back(std::move(t));
-                }
-                for (size_t i = 0; i < numThreads; ++i)
-                {
-                    threads[i].join();
-                }
-                examples_.clear();
-                truth_.clear();
-                users_.clear();
-                n_examples = 0;
-            }
-        }
-    }
+    std::vector<Query> dayDataVec = DayDataToVec(dayData);
+    dayData.clear();
     std::vector<std::thread> threads;
-    size_t numThreads = 7;
+    size_t numThreads = 4;
     for (size_t i = 0; i < numThreads; ++i)
     {
-        std::thread t(&collaborative_filtering::One_step1, this, std::ref(examples_), std::ref(truth_), std::ref(users_), i, numThreads);
-        threads.push_back(std::move(t));
-    }
-    for (size_t i = 0; i < numThreads; ++i)
-    {
-        threads[i].join();
+          std::thread t(&collaborative_filtering::LearnOneEx1, this, std::ref(dayDataVec), std::ref(queryUser), std::ref(userUrl),std::ref(queryRank),
+                                                                i, numThreads);
+          threads.push_back(std::move(t));
     }
 
-    std::cout << correct_answers << std::endl;
+    for (size_t i = 0; i < numThreads; ++i)
+    {
+                    threads[i].join();
+    }
+
     std::cout << "Ready!!!" << std::endl;
 }
 
 void collaborative_filtering::Learn_by_several_daya(const std::string& pathToData, int start_learning_day, int end_learning_day)
 {
      Counters counters;
-//    for (int i = 1; i < start_learning_day; ++i)
-//    {
-//        DayData dayData = read_day(pathToData +"data_by_days/" +std::to_string(i) + ".txt");
-//        std::cout << "End reading " << i <<  "day\n";
-//        calculate_counters(dayData, counters);
-//    }
+/*    for (int i = 1; i < start_learning_day; ++i)
+    {
+        DayData dayData = read_day(pathToData +"data_by_days/" +std::to_string(i) + ".txt");
+        std::cout << "End reading " << i <<  "day\n";
+        calculate_counters(dayData, counters);
+    }*/
 
     clock_t start = clock();
     uumap queryUser(pathToData + "query_user_1_24");
@@ -413,36 +386,24 @@ void collaborative_filtering::Learn_by_several_daya(const std::string& pathToDat
     {
          DayData dayData = read_day(pathToData + "data_by_days/"+ std::to_string(i) + ".txt");
          rate *= 1./ (i + 1 - start_learning_day);
-         for (int j = 0; j <  1; ++j)
+         if (std::abs(rate) < 0.05) rate = -0.05;
+         for (int j = 0; j <  10; ++j)
          {
             Learn(counters.query_user, counters.user_url, counters.query_rank, dayData);
          }
          calculate_counters(dayData, counters);
          if (i == end_learning_day - 1)
          {
-            std::cout << "Run Print to file\n";
-            Print(pathToData + "embedding/model" + std::to_string(i));
-            std::cout << "End Print to file\n";
+            //std::cout << "Run Print to file\n";
+            //Print(pathToData + "embedding/model" + std::to_string(i));
+            //std::cout << "End Print to file\n";
             Test(counters.query_user, counters.user_url, counters.query_rank, i+1, pathToData);
          }
     }
 
 }
 
-vector<Query> DayDataToVec(const DayData& day)
-{
-    std::cout << "Run DayData to Vec\n";
-    std::vector<Query> data;
-    for(const auto& item0 : day)
-    {
-        for (const auto& item1 : item0.second)
-        {
-            data.push_back(item1.second);
-        }
-    }
-    std::cout << "End DayData to Vec\n";
-    return data;
-}
+
 
 std::pair<size_t, size_t> Calculate_pairs(const Query& history, std::vector<double>& evristic, std::vector<double>& my_evristic)
 {       
@@ -585,20 +546,12 @@ void collaborative_filtering::Test(const uumap& queryUser, const uumap& userUrl,
     dayData.clear();
 
     auto start = std::chrono::system_clock::now();
-    size_t enumerator = 0;
-    size_t numPlus = 0;
-    size_t numMinus = 0;
-    size_t numMyPlus = 0;
-    size_t numMyMinus = 0;
-    size_t numBasicPlus = 0;
-    size_t numBasicMinus = 0;
-
     Result my;
     Result ev;
     std::vector<std::thread> threads;
     std::vector<Result*> results;
     std::vector<Result*> my_results;
-    size_t numThreads = 7;
+    size_t numThreads = 4;
     for (size_t i = 0; i < numThreads; ++i)
     {
         results.push_back(new Result());
