@@ -631,7 +631,7 @@ int main()
     {
         //learner.rate /= (i+1);
         std::cout << " N ITERATION " << i << std::endl;
-        learner.Learn_by_several_daya(out_directory,25,27);
+        learner.Learn_by_several_daya(out_directory,26,27);
     }
 //    queryUser.clear();
 //    userUrl.clear();
@@ -641,7 +641,6 @@ int main()
 
 //    std::map<size_t, size_t> users_in_train =  Get_number_trainig_example_with_user(out_directory + "data_stat/pairs_26");
 //    Test2(users_in_train);
-
 
 
 
