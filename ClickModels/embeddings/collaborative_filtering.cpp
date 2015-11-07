@@ -1,5 +1,6 @@
 #include "collaborative_filtering.h"
 #include <chrono>
+#include <thread>
 
 
 double similarity(const std::vector<double>& x,const std::vector<double>& y)
@@ -103,7 +104,7 @@ std::vector<double> collaborative_filtering::res_one_position(const std::vector<
 }
 
 static size_t enumerator = 0;
-static size_t correct_answers = 0;
+//static size_t correct_answers = 0;
 
 double LogLikelihood(const std::vector<bool>& truth, const std::vector<double>& position_distribution, double sum)
 {
@@ -158,7 +159,7 @@ void collaborative_filtering::One_step(const std::vector<Example>& examples,
     std::vector<double> new_vector_for_user(dim, 0.);
     std:vector<double> position_distribution = res_one_position(examples, user);
     std::vector<double> coeffs(10, 0.);
-    correct_answers += Correct_answer(position_distribution, truth);
+    //correct_answers += Correct_answer(position_distribution, truth);
     double sum_all = std::accumulate(position_distribution.begin(), position_distribution.end(), 0.);
     for (int rang = 0; rang < 10; ++rang)
     {

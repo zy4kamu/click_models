@@ -9,7 +9,7 @@ if (${CMAKE_BUILD_TYPE} MATCHES DEBUG)
     add_compile_options(-O0 -m64 -pthread -std=c++0x -g)
 else()
     MESSAGE("Building RELEASE version: -O3 is used")
-    add_compile_options(-Ofast -m64 -std=c++11 -pthread)
+    add_compile_options(-Ofast -m64 -pthread -std=c++0x)
 endif()
 
 
