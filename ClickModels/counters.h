@@ -13,7 +13,7 @@ struct Counters
 
     Counters();
     void clear();
-    void save(size_t start_day, size_t finish_day);
+    void save(const string& out_directory, size_t start_day, size_t finish_day);
     void Set_query_url(uumap& query_url_);
     void Set_user_url(uumap& user_url_);
     void Set_user_rank(uumap& user_rank_);

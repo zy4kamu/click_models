@@ -12,7 +12,7 @@ public:
     const vector<double>& watch(size_t key1, size_t key2) const;
     const unordered_map<size_t, vector<double> >& watch(size_t key1) const;
     void clear();
-private:
+public:
     typedef unordered_map<size_t, unordered_map<size_t, vector<double> > > UUmap;
     UUmap data;
 };

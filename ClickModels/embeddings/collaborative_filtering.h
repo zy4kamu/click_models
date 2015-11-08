@@ -69,7 +69,7 @@ public:
     void LearnOneEx(const Query& history, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank);
     void LearnOneEx1(const std::vector<Query>& dayDataVec, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank,
                                              size_t coreIndex, size_t numCores);
-    void Learn(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, DayData& dayData);
+    void Learn(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const DayData& dayData);
     void One_step(const std::vector<Example>& examples,
                                            const std::vector<bool>& truth,
                                            size_t user);
@@ -78,11 +78,21 @@ public:
                                             const std::vector<size_t>& users,
                                             size_t coreIndex, size_t numCores);
     void Learn_by_several_daya(const std::string& pathToData, int start_learning_day, int end_learning_day);
-    void Test(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day, const std::string& pathToData);
-    void TestOneEx(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history, Result& ev, Result& my);
+    std::unordered_set<int> Test(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day, const std::string& pathToData);
+
+    bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
+    void Test2(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day,
+                                       const std::string& pathToData, const std::unordered_set<int>& examples);
+    void TestOneEx(const uumap& queryUser, const uumap& userUrl,const Query& history, Result& ranker, Result& ev, Result& my);
     void TestOneEx1(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank,
                                              const std::vector<Query>& dayDataVec,
-                                             Result& ev, Result& my,
+                                             Result& ranker, Result& ev, Result& my,
+                                             std::unordered_set<int>& examples,
+                                             size_t coreIndex, size_t numCores);
+    void TestOneExByIndex1( const uumap& queryUser, const uumap& userUrl, const uumap& queryRank,
+                                             const std::vector<Query>& dayDataVec,
+                                             Result& ranker, Result& ev, Result& my,
+                                             const std::unordered_set<int>& examples,
                                              size_t coreIndex, size_t numCores);
     void Print(const string& file) const;
     double rate;

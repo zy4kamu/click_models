@@ -12,8 +12,8 @@
 
 //void GetHistogramm(MyLearner& learner, int step);
 
-//string out_directory = "/home/stepan/click_models_data/";
-static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+string out_directory = "/home/stepan/click_models_data/";
+//static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
 //static string out_directory = "/home/anna/Рабочий стол/work/data/";
 
 
@@ -610,7 +610,7 @@ int main()
 //    uumap userUrl(out_directory + "user_url_1_25");
 //    uumap queryRank(out_directory + "query_rank_1_25");
 //    DayData dayData = read_day(out_directory + "data_by_days/26.txt");
-    collaborative_filtering learner(-1., 20, out_directory + "users");
+    collaborative_filtering learner(-0.1., 20, out_directory + "users");
 //      std::vector<Example> examples;
 //      std::vector<bool> truth(10, false);
 //      truth[2] = true;
@@ -629,9 +629,9 @@ int main()
 //      }
     for (int i = 0; i < 100; ++i)
     {
-        //learner.rate /= (i+1);
+        //learner.rate /= std::sqrt(i+1);
         std::cout << " N ITERATION " << i << std::endl;
-        learner.Learn_by_several_daya(out_directory,26,27);
+        learner.Learn_by_several_daya(out_directory,23,25);
     }
 //    queryUser.clear();
 //    userUrl.clear();

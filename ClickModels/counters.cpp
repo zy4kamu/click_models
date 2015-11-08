@@ -44,7 +44,7 @@ void Counters::clear()
     query_rank.clear();
 }
 
-void Counters::save(size_t start_day, size_t finish_day)
+void Counters::save(const string& out_directory, size_t start_day, size_t finish_day)
 {
     string postfix = "_" + std::to_string(start_day) + "_" + std::to_string(finish_day);
 
@@ -133,6 +133,6 @@ void calculate_counters(const string& folder, size_t start_day, size_t finish_da
         end = clock();
         std::cout << i << " calculations: " << double(end - start) /  CLOCKS_PER_SEC << std::endl;
     }
-    counters.save(start_day, finish_day);
+    counters.save(out_directory, start_day, finish_day);
 }
 
