@@ -405,12 +405,12 @@ void collaborative_filtering::Learn_by_several_daya(const std::string& pathToDat
          calculate_counters(dayData, counters);
          if (i < end_learning_day - 1)
          {
-             filter = Test(counters.query_user, counters.user_url, counters.query_rank, i+1, pathToData);
+             filter = Test(counters.query_user, counters.user_url, counters.query_rank, end_learning_day, pathToData);
          }
 
          if (i == end_learning_day - 1)
          {
-            Test2(counters.query_user, counters.user_url, counters.query_rank, i+1, pathToData, filter);
+            Test2(counters.query_user, counters.user_url, counters.query_rank, end_learning_day, pathToData, filter);
          }
     }
 
@@ -421,7 +421,7 @@ void collaborative_filtering::Learn_by_several_daya(const std::string& pathToDat
 std::pair<size_t, size_t> Calculate_pairs(const Query& history, std::vector<double>& evristic, std::vector<double>& my_evristic)
 {       
     std::pair<size_t, size_t> res(0, 0);
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 1; ++i)
     {
         for (int j = i+1; j < i+2; ++j)
         {
@@ -593,7 +593,7 @@ std::unordered_set<int> collaborative_filtering::Test(const uumap& queryUser, co
                                    const std::string& pathToData)
 {
     std::cout << "Run TEST On day " << test_day << std::endl;
-    DayData dayData = read_day(pathToData + "data_by_days/"+ std::to_string(25) + ".txt");
+    DayData dayData = read_day(pathToData + "data_by_days/"+ std::to_string(test_day) + ".txt");
     std::vector<Query> dayDataVec = DayDataToVec(dayData);
     dayData.clear();
 
@@ -609,7 +609,7 @@ std::unordered_set<int> collaborative_filtering::Test(const uumap& queryUser, co
 
     std::vector<std::unordered_set<int>*> examples;
 
-    size_t numThreads = 8;
+    size_t numThreads = 7;
     for (size_t i = 0; i < numThreads; ++i)
     {
         results.push_back(new Result());
@@ -672,7 +672,7 @@ void collaborative_filtering::Test2(const uumap& queryUser, const uumap& userUrl
 {
     std::cout << examples.size() << "\n";
     std::cout << "Run TEST On day " << test_day << std::endl;
-    DayData dayData = read_day(pathToData + "data_by_days/"+ std::to_string(25) + ".txt");
+    DayData dayData = read_day(pathToData + "data_by_days/"+ std::to_string(test_day) + ".txt");
     std::vector<Query> dayDataVec = DayDataToVec(dayData);
     dayData.clear();
 
@@ -687,7 +687,7 @@ void collaborative_filtering::Test2(const uumap& queryUser, const uumap& userUrl
     std::vector<Result*> ranker_results;
 
 
-    size_t numThreads = 8;
+    size_t numThreads = 7;
     for (size_t i = 0; i < numThreads; ++i)
     {
         results.push_back(new Result());

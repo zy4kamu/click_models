@@ -610,7 +610,7 @@ int main()
 //    uumap userUrl(out_directory + "user_url_1_25");
 //    uumap queryRank(out_directory + "query_rank_1_25");
 //    DayData dayData = read_day(out_directory + "data_by_days/26.txt");
-    collaborative_filtering learner(-0.1., 20, out_directory + "users");
+    collaborative_filtering learner(-1, 20, out_directory + "users");
 //      std::vector<Example> examples;
 //      std::vector<bool> truth(10, false);
 //      truth[2] = true;
@@ -629,9 +629,10 @@ int main()
 //      }
     for (int i = 0; i < 100; ++i)
     {
-        //learner.rate /= std::sqrt(i+1);
+        learner.rate /= std::sqrt(i+1);
         std::cout << " N ITERATION " << i << std::endl;
-        learner.Learn_by_several_daya(out_directory,23,25);
+        learner.Learn_by_several_daya(out_directory,25,27);
+        learner.rate *= std::sqrt(i+1);
     }
 //    queryUser.clear();
 //    userUrl.clear();
