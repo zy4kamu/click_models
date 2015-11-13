@@ -12,8 +12,8 @@
 
 //void GetHistogramm(MyLearner& learner, int step);
 
-string out_directory = "/home/stepan/click_models_data/";
-//static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+//string out_directory = "/home/stepan/click_models_data/";
+static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
 //static string out_directory = "/home/anna/Рабочий стол/work/data/";
 
 
@@ -627,11 +627,12 @@ int main()
 //      {
 //        learner.One_step(examples,truth,9);
 //      }
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 10; ++i)
     {
         learner.rate /= std::sqrt(i+1);
         std::cout << " N ITERATION " << i << std::endl;
-        learner.Learn_by_several_daya(out_directory,25,27);
+        bool print = true;
+        learner.Learn_by_several_daya(out_directory,25,26, print);
         learner.rate *= std::sqrt(i+1);
     }
 //    queryUser.clear();

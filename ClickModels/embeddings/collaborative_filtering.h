@@ -44,11 +44,22 @@ struct VectorWithLoc
     VectorWithLoc(std::vector<double>& v) : v(v) {}
 };
 
+struct ResultForOneEx
+{
+    double first_dist;
+    double second_dist;
+    int truth;
+    int base_result1;
+    int ranker;
+    ResultForOneEx(double fd, double sd, int t) : first_dist(fd), second_dist(sd), truth(t) {}
+};
+
 struct Result
 {
     size_t corect_pairs;
     size_t right_answers;
     size_t wrong_answers;
+    std::vector<ResultForOneEx> distToAnswers;
     Result(): corect_pairs(0), right_answers(0), wrong_answers(0) {}
 };
 
@@ -59,6 +70,7 @@ private:
 
     int dim;
     std::unordered_map<size_t, std::vector<double>> embedding;
+    std::unordered_map<size_t, std::vector<double>> document_embedding;
     std::ofstream res_file;
     Similarity_function f;
 private:
@@ -77,7 +89,7 @@ public:
                                             const std::vector<std::vector<bool>>& truth,
                                             const std::vector<size_t>& users,
                                             size_t coreIndex, size_t numCores);
-    void Learn_by_several_daya(const std::string& pathToData, int start_learning_day, int end_learning_day);
+    void Learn_by_several_daya(const std::string& pathToData, int start_learning_day, int end_learning_day, bool print);
     std::unordered_set<int> Test(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day, const std::string& pathToData);
 
     bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);

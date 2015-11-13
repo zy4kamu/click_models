@@ -3,7 +3,10 @@
 #include <thread>
 #include <algorithm>
 
-static string out_directory = "/home/stepan/click_models_data/";
+static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+//static string out_directory = "/home/stepan/click_models_data/";
+
+size_t numThreads = 4;
 
 double similarity(const std::vector<double>& x,const std::vector<double>& y)
 {
@@ -77,7 +80,7 @@ collaborative_filtering::collaborative_filtering(double rate_, int dim_, const s
             item = distribution(generator);
         }
     }
-    res_file.open(out_directory + "data_stat/histogramms/result.txt");
+    res_file.open(out_directory + "data_stat/histogramms/result_train.txt");
 }
 
 void summ(VectorWithLoc& x, const std::vector<double>&y, double rate)
@@ -355,7 +358,7 @@ void collaborative_filtering::Learn(const uumap& queryUser, const uumap& userUrl
     clock_t start = clock();
     std::vector<Query> dayDataVec = DayDataToVec(dayData);
     std::vector<std::thread> threads;
-    size_t numThreads = 8;
+    //size_t numThreads = 8;
     for (size_t i = 0; i < numThreads; ++i)
     {
           std::thread t(&collaborative_filtering::LearnOneEx1, this, std::ref(dayDataVec), std::ref(queryUser), std::ref(userUrl),std::ref(queryRank),
@@ -371,27 +374,27 @@ void collaborative_filtering::Learn(const uumap& queryUser, const uumap& userUrl
     std::cout << "Ready!!!" << std::endl;
 }
 
-void collaborative_filtering::Learn_by_several_daya(const std::string& pathToData, int start_learning_day, int end_learning_day)
+void collaborative_filtering::Learn_by_several_daya(const std::string& pathToData, int start_learning_day, int end_learning_day, bool print)
 {
      Counters counters;
-    for (int i = 1; i < start_learning_day; ++i)
-    {
-        DayData dayData = read_day(pathToData +"data_by_days/" +std::to_string(i) + ".txt");
-        std::cout << "End reading " << i <<  "day\n";
-        calculate_counters(dayData, counters);
-    }
+//    for (int i = 1; i < start_learning_day; ++i)
+//    {
+//        DayData dayData = read_day(pathToData +"data_by_days/" +std::to_string(i) + ".txt");
+//        std::cout << "End reading " << i <<  "day\n";
+//        calculate_counters(dayData, counters);
+//    }
 
-//    clock_t start = clock();
-//    uumap queryUser(pathToData + "query_user_1_25");
-//    uumap userUrl(pathToData + "user_url_1_25");
-//    uumap queryRank(pathToData + "query_rank_1_25");
-//    counters.Set_user_url(userUrl);
-//    userUrl.clear();
-//    counters.Set_query_user(queryUser);
-//    queryUser.clear();
-//    counters.Set_query_rank(queryRank);
-//    queryRank.clear();
-//    std::cout << "have read counters for " << double(clock() - start) / CLOCKS_PER_SEC << " seconds ..." << std::endl;
+    clock_t start = clock();
+    uumap queryUser(pathToData + "query_user_1_24");
+    uumap userUrl(pathToData + "user_url_1_24");
+    uumap queryRank(pathToData + "query_rank_1_24");
+    counters.Set_user_url(userUrl);
+    userUrl.clear();
+    counters.Set_query_user(queryUser);
+    queryUser.clear();
+    counters.Set_query_rank(queryRank);
+    queryRank.clear();
+    std::cout << "have read counters for " << double(clock() - start) / CLOCKS_PER_SEC << " seconds ..." << std::endl;
 
     std::cout << "Run_Learning\n";
     std::unordered_set<int> filter;
@@ -403,15 +406,15 @@ void collaborative_filtering::Learn_by_several_daya(const std::string& pathToDat
             Learn(counters.query_user, counters.user_url, counters.query_rank, dayData);
          }
          calculate_counters(dayData, counters);
-         if (i < end_learning_day - 1)
+         if (i <= end_learning_day - 1 && print)
          {
              filter = Test(counters.query_user, counters.user_url, counters.query_rank, end_learning_day, pathToData);
          }
 
-         if (i == end_learning_day - 1)
-         {
-            Test2(counters.query_user, counters.user_url, counters.query_rank, end_learning_day, pathToData, filter);
-         }
+//         if (i == end_learning_day - 1)
+//         {
+//            Test2(counters.query_user, counters.user_url, counters.query_rank, end_learning_day, pathToData, filter);
+//         }
     }
 
 }
@@ -438,13 +441,31 @@ std::pair<size_t, size_t> Calculate_pairs(const Query& history, std::vector<doub
     return res;
 }
 
-void GetResult(const Query& history, std::vector<double>& evristic, size_t& numPlus, size_t& numMinus)
+double Get_second_click(const std::vector<double>& evristic, int rank_best_click)
 {
-    int clickedBestRank = 0;
-    double max_click = evristic[0];
+    int clickedBestRank = -1;
+    double max_click = -1;
 
     for (int i = 0; i < 10; ++i)
     {
+        if (max_click < evristic[i] && rank_best_click != i)
+        {
+            clickedBestRank = i;
+            max_click = evristic[i];
+        }
+    }
+    return max_click;
+}
+
+void GetResult(const Query& history,const std::vector<double>& evristic, Result& r)
+{
+    int clickedBestRank = 0;
+    double max_click = evristic[0];
+    double sum_evristic = 0;
+
+    for (int i = 0; i < 10; ++i)
+    {
+        sum_evristic += evristic[i];
         if (max_click < evristic[i])
         {
             clickedBestRank = i;
@@ -453,13 +474,16 @@ void GetResult(const Query& history, std::vector<double>& evristic, size_t& numP
     }
     // calculate statistics
     if (history.type[clickedBestRank] == 2) {
-        ++numPlus;
+        ++r.right_answers;
+        r.distToAnswers.push_back(ResultForOneEx(max_click / sum_evristic , Get_second_click(evristic, clickedBestRank) / sum_evristic, 1.));
+
     } else {
-        ++numMinus;
+        ++r.wrong_answers;
+        r.distToAnswers.push_back(ResultForOneEx(max_click / sum_evristic, Get_second_click(evristic, clickedBestRank) / sum_evristic, 0.));
     }
 }
 
-bool collaborative_filtering::GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
+bool  Filter1(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
 {
     size_t query = history.id;
     size_t user = history.person;
@@ -471,6 +495,14 @@ bool collaborative_filtering::GetFilter(const uumap& queryUser, const uumap& use
     {
      return false;
     }
+    return true;
+}
+
+bool  Filter2(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
+{
+    size_t query = history.id;
+    size_t user = history.person;
+    int url = -1;
 
     for (size_t i = 0; i < 10; ++i)
     {
@@ -480,18 +512,67 @@ bool collaborative_filtering::GetFilter(const uumap& queryUser, const uumap& use
          return false;
      }
     }
+    return true;
+}
+
+bool Filter3(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
+{
+    size_t query = history.id;
     if (queryUser.watch(query).size() <  10) return false;
+    return true;
+}
+
+bool Filter4(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
+{
     bool found = false;
     for (size_t i = 0; i < 10; ++i)
     {
      if(history.type[i] == 2)
      {
          found = true;
-         url = history.urls[i];
          break;
      }
     }
     if (!found) return false;
+    return true;
+}
+
+bool collaborative_filtering::GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
+{
+    typedef bool(*filter) (const uumap&, const uumap&, const uumap&, const Query&);
+    vector<filter> filters = {Filter1, /*Filter2, */Filter3, Filter4};
+    for (size_t i = 0; i < filters.size(); ++i)
+    {
+        if (!filters[i](queryUser, userUrl, queryRank, history)) return false;
+    }
+    if (Filter2(queryUser, userUrl, queryRank, history)) return false;
+    return true;
+}
+
+bool FindPersonWithSameClick(const Query& history, const vector<double>& evristic, const vector<double>& bias)
+{
+    for (size_t i = 0; i < 10; ++i)
+    {
+        if (history.type[i] == 2 && evristic[i]-bias[i] > 1e-10) return true;
+    }
+    return false;
+}
+
+bool FindPersonThatCLicksOnTop3Position(const vector<double>& evristic, const vector<double>& bias)
+{
+    for (size_t i = 0; i < 3; ++i)
+    {
+        if (evristic[i]-bias[i] < 1e-10) return false;
+    }
+    return true;
+}
+
+bool IsHeruisticMoreThanThreshold(const vector<double>& evristic, const vector<double>& bias)
+{
+    if (*std::max_element(evristic.begin(), evristic.end()) < 2.66)
+    {
+        return false;
+    }
     return true;
 }
 
@@ -540,18 +621,25 @@ void collaborative_filtering::TestOneEx(const uumap& queryUser, const uumap& use
              my_evristic[clickedBestRank] += similarity(embedding[user], embedding[nearestUser]);
         }
     }
+
+    //if (!FindPersonWithSameClick(history, evristic, a)) return;
+    //if (!IsHeruisticMoreThanThreshold(my_evristic, a)) return;
+
     std::pair<size_t, size_t> pairs_res = Calculate_pairs(history, evristic, my_evristic);
     ev.corect_pairs += pairs_res.first;
     my.corect_pairs += pairs_res.second;
-    GetResult(history, evristic, ev.right_answers, ev.wrong_answers);
-    GetResult(history, my_evristic, my.right_answers, my.wrong_answers);
+    GetResult(history, evristic, ev);
+    GetResult(history, my_evristic, my);
+    my.distToAnswers[my.distToAnswers.size() - 1].base_result1 = ev.distToAnswers[ev.distToAnswers.size() - 1].truth;
     if (history.type[0] == 2)
     {
         ranker.right_answers += 1;
+        my.distToAnswers[my.distToAnswers.size() - 1].ranker = 1;
     }
     else
     {
         ranker.wrong_answers += 1;
+        my.distToAnswers[my.distToAnswers.size() - 1].ranker = 0;
     }
 }
 
@@ -582,7 +670,7 @@ void collaborative_filtering::TestOneExByIndex1(const uumap& queryUser, const uu
     for (size_t i = coreIndex; i < dayDataVec.size(); i += numCores)
     {
        //if (i % 1000 == 0) std::cout << i << std::endl;
-       if (examples.find(i) != examples.end())
+       if (examples.find(i) != examples.end() && Filter2(queryUser,userUrl,queryRank,dayDataVec[i]))
        {
             TestOneEx(queryUser, userUrl, dayDataVec[i], ranker, ev, my);
        }
@@ -609,7 +697,7 @@ std::unordered_set<int> collaborative_filtering::Test(const uumap& queryUser, co
 
     std::vector<std::unordered_set<int>*> examples;
 
-    size_t numThreads = 7;
+    //size_t numThreads = 4;
     for (size_t i = 0; i < numThreads; ++i)
     {
         results.push_back(new Result());
@@ -639,6 +727,7 @@ std::unordered_set<int> collaborative_filtering::Test(const uumap& queryUser, co
         my.corect_pairs += my_results[i]->corect_pairs;
         my.right_answers += my_results[i]->right_answers;
         my.wrong_answers += my_results[i]->wrong_answers;
+        my.distToAnswers.insert( my.distToAnswers.end(), my_results[i]->distToAnswers.begin(), my_results[i]->distToAnswers.end());
         ev.corect_pairs += results[i]->corect_pairs;
         ev.right_answers += results[i]->right_answers;
         ev.wrong_answers += results[i]->wrong_answers;
@@ -653,11 +742,18 @@ std::unordered_set<int> collaborative_filtering::Test(const uumap& queryUser, co
     clear_vector(ranker_results);
     clear_vector(examples);
 
+    std::sort(my.distToAnswers.begin(), my.distToAnswers.end(), [](const ResultForOneEx& a, const ResultForOneEx& b) {return a.first_dist < b.first_dist;});
     auto end = std::chrono::system_clock::now();
-    res_file << " BASIC " << ranker.right_answers << " " << ranker.wrong_answers << " " << (double)ranker.right_answers / (ranker.wrong_answers + ranker.right_answers) << ";"
+    for (size_t i = 0; i < my.distToAnswers.size(); ++i)
+    {
+        res_file << my.distToAnswers[i].first_dist << " " << my.distToAnswers[i].second_dist <<" " <<
+                    " " << my.distToAnswers[i].second_dist / my.distToAnswers[i].first_dist << " " << my.distToAnswers[i].first_dist - my.distToAnswers[i].second_dist << " "
+                 << my.distToAnswers[i].ranker << " " << my.distToAnswers[i].base_result1 << " "<< my.distToAnswers[i].truth << "\n";
+    }
+    std::cout << " BASIC " << ranker.right_answers << " " << ranker.wrong_answers << " " << (double)ranker.right_answers / (ranker.wrong_answers + ranker.right_answers) << ";"
             << " EMBEDDING " << ev.right_answers << " " << ev.wrong_answers << " " << (double)ev.right_answers / (ev.wrong_answers + ev.right_answers) << ";"
              << " MY_EMBEDDING " << my.right_answers << " " << my.wrong_answers << " " << (double)my.right_answers / (my.wrong_answers + my.right_answers) << ";\n"
-                  << " MY " << my.corect_pairs << " " << ev.corect_pairs <<endl;;
+                  << " MY " << my.corect_pairs << " " << ev.corect_pairs <<endl;
 
     std::chrono::duration<double> diff = end-start;
     std::cout << "Ready!!! " << diff.count() <<std::endl;
@@ -687,7 +783,7 @@ void collaborative_filtering::Test2(const uumap& queryUser, const uumap& userUrl
     std::vector<Result*> ranker_results;
 
 
-    size_t numThreads = 7;
+    //size_t numThreads = 4;
     for (size_t i = 0; i < numThreads; ++i)
     {
         results.push_back(new Result());
@@ -727,6 +823,9 @@ void collaborative_filtering::Test2(const uumap& queryUser, const uumap& userUrl
     clear_vector(my_results);
     clear_vector(results);
     clear_vector(ranker_results);
+
+
+
 
     auto end = std::chrono::system_clock::now();
     res_file << " BASIC " << ranker.right_answers << " " << ranker.wrong_answers << " " << (double)ranker.right_answers / (ranker.wrong_answers + ranker.right_answers) << ";"
