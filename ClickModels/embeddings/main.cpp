@@ -610,29 +610,29 @@ int main()
 //    uumap userUrl(out_directory + "user_url_1_25");
 //    uumap queryRank(out_directory + "query_rank_1_25");
 //    DayData dayData = read_day(out_directory + "data_by_days/26.txt");
-    collaborative_filtering learner(-1, 20, out_directory + "users");
+    collaborative_filtering learner(-1., 20, out_directory + "users", out_directory + "documents");
 //      std::vector<Example> examples;
 //      std::vector<bool> truth(10, false);
 //      truth[2] = true;
-//      examples.push_back(Example(0,0));
-//      examples.push_back(Example(1,0));
-//      examples.push_back(Example(2,0));
-//      examples.push_back(Example(3,1));
-//      examples.push_back(Example(4,1));
-//      examples.push_back(Example(5,1));
-//      examples.push_back(Example(6,1));
-//      examples.push_back(Example(7,2));
-//      examples.push_back(Example(8,2));
+//      examples.push_back(Example(learner.embedding[0],0));
+//      examples.push_back(Example(learner.embedding[1],0));
+//      examples.push_back(Example(learner.embedding[2],0));
+//      examples.push_back(Example(learner.embedding[3],1));
+//      examples.push_back(Example(learner.embedding[4],1));
+//      examples.push_back(Example(learner.embedding[5],1));
+//      examples.push_back(Example(learner.embedding[6],1));
+//      examples.push_back(Example(learner.embedding[7],2));
+//      examples.push_back(Example(learner.embedding[8],2));
 //      for (int i = 0; i < 10; ++i)
 //      {
-//        learner.One_step(examples,truth,9);
+//        learner.One_step(examples,truth,9, true);
 //      }
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < 100; ++i)
     {
         learner.rate /= std::sqrt(i+1);
         std::cout << " N ITERATION " << i << std::endl;
-        bool print = true;
-        learner.Learn_by_several_daya(out_directory,25,26, print);
+        bool print = i % 1 == 0;
+        learner.Learn_by_several_daya(out_directory,25,27, print);
         learner.rate *= std::sqrt(i+1);
     }
 //    queryUser.clear();

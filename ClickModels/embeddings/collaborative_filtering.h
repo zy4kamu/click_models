@@ -16,7 +16,7 @@
 #include <mutex>
 
 
-
+void Get_documents();
 
 class Similarity_function
 {
@@ -32,9 +32,9 @@ public:
 class Example
 {
 public:
-    size_t user;
+    std::vector<double>& user;
     size_t rang_click_document;
-    Example(size_t u, size_t r): user(u), rang_click_document(r) {}
+    Example(std::vector<double>& u, size_t r): user(u), rang_click_document(r) {}
 };
 
 struct VectorWithLoc
@@ -48,10 +48,15 @@ struct ResultForOneEx
 {
     double first_dist;
     double second_dist;
+    double dist_first_evristic;
+    double dist_second_evristic;
+    size_t first_rang;
+    size_t second_rang;
+    size_t query_popularity;
     int truth;
     int base_result1;
     int ranker;
-    ResultForOneEx(double fd, double sd, int t) : first_dist(fd), second_dist(sd), truth(t) {}
+    ResultForOneEx(double fd, int t) : first_dist(fd), truth(t) {}
 };
 
 struct Result
@@ -69,26 +74,29 @@ class collaborative_filtering
 private:
 
     int dim;
-    std::unordered_map<size_t, std::vector<double>> embedding;
+
     std::unordered_map<size_t, std::vector<double>> document_embedding;
     std::ofstream res_file;
     Similarity_function f;
 private:
     std::vector<double> res_one_position(const std::vector<Example>& examples, size_t user) const;
-
 public:
-    collaborative_filtering(double rate_, int dim_, const string& usersFile);
+    std::unordered_map<size_t, std::vector<double>> embedding;
+public:
+    collaborative_filtering(double rate_, int dim_, const string& usersFile, const string& documentsFile);
     void LearnOneEx(const Query& history, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank);
     void LearnOneEx1(const std::vector<Query>& dayDataVec, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank,
                                              size_t coreIndex, size_t numCores);
+    void LearnOneExForDocuments(const Query& history, const uumap& queryUser,
+                                const uumap& userUrl, const uumap& queryRank);
     void Learn(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const DayData& dayData);
     void One_step(const std::vector<Example>& examples,
                                            const std::vector<bool>& truth,
-                                           size_t user);
+                                           size_t user, bool change_user);
     void One_step1( const std::vector<std::vector<Example>>& examples,
                                             const std::vector<std::vector<bool>>& truth,
                                             const std::vector<size_t>& users,
-                                            size_t coreIndex, size_t numCores);
+                                            size_t coreIndex, size_t numCores, bool change_user);
     void Learn_by_several_daya(const std::string& pathToData, int start_learning_day, int end_learning_day, bool print);
     std::unordered_set<int> Test(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day, const std::string& pathToData);
 
