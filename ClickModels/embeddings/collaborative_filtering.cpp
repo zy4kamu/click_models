@@ -3,10 +3,10 @@
 #include <thread>
 #include <algorithm>
 
-static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
-//static string out_directory = "/home/stepan/click_models_data/";
+//static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+static string out_directory = "/home/stepan/click_models_data/";
 
-size_t numThreads = 4;
+size_t numThreads = 8;
 
 double similarity(const std::vector<double>& x,const std::vector<double>& y)
 {
@@ -98,6 +98,14 @@ bool Filter3(const uumap& queryUser, const uumap& userUrl, const uumap& queryRan
     return true;
 }
 
+bool Filter3Mine(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history, int min_number, int max_number)
+{
+    size_t query = history.id;
+    if (queryUser.watch(query).size() <  min_number) return false;
+    if (queryUser.watch(query).size() >  max_number) return false;
+    return true;
+}
+
 bool Filter4(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
 {
     bool found = false;
@@ -121,6 +129,18 @@ bool collaborative_filtering::GetFilter(const uumap& queryUser, const uumap& use
     {
         if (!filters[i](queryUser, userUrl, queryRank, history)) return false;
     }
+    return true;
+}
+
+bool collaborative_filtering::GetFilterForTest(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
+{
+    typedef bool(*filter) (const uumap&, const uumap&, const uumap&, const Query&);
+    vector<filter> filters = {Filter1, Filter2,Filter4};
+    for (size_t i = 0; i < filters.size(); ++i)
+    {
+        if (!filters[i](queryUser, userUrl, queryRank, history)) return false;
+    }
+    if (!Filter3Mine(queryUser, userUrl, queryRank, history, min_number, max_number)) return false;
     return true;
 }
 //-------------------------------------------------------
@@ -153,8 +173,9 @@ void Get_documents()
 
 //-------------------------------------------------------
 collaborative_filtering::collaborative_filtering(double rate_, int dim_, const string& usersFile,
-                                                 const string& documentsFile):
-    rate(rate_), dim(dim_), f(similarity, divSimilarity)
+                                                 const string& documentsFile, const std::string& result_file,
+                                                 int min_n, int max_n):
+    rate(rate_), dim(dim_), f(similarity, divSimilarity), min_number(min_n), max_number(max_n)
 {
     int enumerator = 0;
     std::default_random_engine generator;
@@ -191,8 +212,8 @@ collaborative_filtering::collaborative_filtering(double rate_, int dim_, const s
             item = distribution(generator);
         }
     }
-
-    res_file.open(out_directory + "data_stat/histogramms/result.txt");
+    res_file.open(result_file);
+    //res_file.open(out_directory + "data_stat/histogramms/result.txt");
 }
 
 void summ(VectorWithLoc& x, const std::vector<double>&y, double rate)
@@ -219,13 +240,13 @@ vector<Query> DayDataToVec(const DayData& day)
     return data;
 }
 
-std::vector<double> collaborative_filtering::res_one_position(const std::vector<Example>& examples, size_t user) const
+std::vector<double> collaborative_filtering::res_one_position(const std::vector<Example>& examples, const std::vector<double>& user) const
 {
     std::vector<double> res(10, 1e-5);
     for (size_t i = 0; i < examples.size(); ++i)
     {
         res[examples[i].rang_click_document] +=
-                f.similarity(embedding.at(user), examples[i].user);
+                f.similarity(user, examples[i].user);
     }
     return res;
 }
@@ -280,7 +301,7 @@ int Correct_answer(const std::vector<double>& stat, const std::vector<bool>& tru
 
 void collaborative_filtering::One_step(const std::vector<Example>& examples,
                                        const std::vector<bool>& truth,
-                                       size_t user, bool change_user)
+                                       std::vector<double>& user, bool change_user)
 {
     ++enumerator;
     std::vector<double> new_vector_for_user(dim, 0.);
@@ -323,84 +344,26 @@ void collaborative_filtering::One_step(const std::vector<Example>& examples,
     {
         VectorWithLoc new_vector_for_user_(new_vector_for_user);
         VectorWithLoc user_embedding(examples[i].user);
-        summ(new_vector_for_user_, f.divSimilarity(embedding[user], examples[i].user), coeffs[examples[i].rang_click_document] * rate);
-        summ(user_embedding, f.divSimilarity(examples[i].user, embedding[user]),
+        summ(new_vector_for_user_, f.divSimilarity(user, examples[i].user), coeffs[examples[i].rang_click_document] * rate);
+        summ(user_embedding, f.divSimilarity(examples[i].user, user),
                 coeffs[examples[i].rang_click_document] * rate);
     }
     if (change_user)
     {
-        VectorWithLoc user_embedding(embedding[user]);
+        VectorWithLoc user_embedding(user);
         summ(user_embedding, new_vector_for_user, 1.);
     }
 
 }
 
-void collaborative_filtering::One_step1( const std::vector<std::vector<Example>>& examples,
-                                        const std::vector<std::vector<bool>>& truth,
-                                        const std::vector<size_t>& users,
-                                        size_t coreIndex, size_t numCores, bool change_user)
-{
-    for (size_t i = coreIndex; i < users.size(); i += numCores)
-    {
-        One_step(examples[i], truth[i], users[i], change_user);
-    }
-}
-//void collaborative_filtering::One_step(const std::vector<Example>& examples,
-//                                       const std::vector<bool>& truth,
-//                                       size_t user)
-//{
-//    ++enumerator;
-//    std::vector<double> new_vector_for_user(dim,0.);
-//    std:vector<double> position_distribution = res_one_position(examples, user);
-//    double sum_all = std::accumulate(position_distribution.begin(), position_distribution.end(), 0.);
-//    double loglikeihood_before = LogLikelihood(truth, position_distribution, sum_all);
-//    for (size_t i = 0; i < examples.size(); ++i)
-//    {
-//        double coeff = -10./ sum_all;
-//        for (size_t rang = 0; rang < 10; ++rang)
-//        {
-//            bool x = truth[rang];
-//            if (rang == examples[i].rang_click_document)
-//            {
 
-//                if (x)
-//                {
-//                    coeff += 1./ (position_distribution[rang]);
-//                    if (coeff != coeff)
-//                    {
-//                        std::cout << coeff << " " << position_distribution[rang] << "POSITION" << " ";
-//                        std::exit(0);
-//                    }
-//                }
-//            }
-//            else
-//            {
-//                if (!x)
-//                {
-//                    coeff += 1/(sum_all - position_distribution[rang]);
-//                    if (coeff != coeff)
-//                    {
-//                       std::cout << coeff << " " << position_distribution[rang] << "POSITION" << " ";
-//                       std::exit(0);
-//                    }
-//                }
-//            }
-//        }
-//        double megarate = coeff * rate;
-//        summ(new_vector_for_user, f.divSimilarity(embedding[user], embedding[examples[i].user]), coeff * rate);
-//    }
-//   summ(embedding[user], new_vector_for_user, 1.);
-//}
 void collaborative_filtering::LearnOneEx1(const std::vector<Query>& dayDataVec, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank,
                                          size_t coreIndex, size_t numCores)
 {
     for (size_t i = coreIndex; i < dayDataVec.size(); i += numCores)
     {
         LearnOneEx(dayDataVec[i], queryUser, userUrl, queryRank);
-        for (int j = 0; j < 1; ++j)
-        {
-            LearnOneExForDocuments(dayDataVec[i], queryUser, userUrl, queryRank);
-        }
+       // LearnOneExForDocuments(dayDataVec[i], queryUser, userUrl, queryRank);
     }
 }
 
@@ -414,35 +377,16 @@ void collaborative_filtering::LearnOneEx(const Query& history, const uumap& quer
     size_t url = -1;
 
     //first filter
-    const vector<double>& rank0 = queryRank.watch(query, 0);
-    const vector<double>& rank1 = queryRank.watch(query, 1);
-    if (rank0.size() > 0 && (rank1.size() == 0 || rank0[0] >= 2 * rank1[0])) return;
+    if (!GetFilter(queryUser, userUrl, queryRank, history)) return;
 
-    //second filter
-    for (size_t i = 0; i < 10; ++i)
-   {
-       const vector<double>& found = userUrl.watch(user, history.urls[i]);
-       if (found.size() > 0 && found[0] > 1 - 1e-5)
-       {
-           return;
-       }
-   }
-
-
-    //third_filter
-    bool found = false;
     for (size_t i = 0; i < 10; ++i)
     {
         if(history.type[i] == 2)
         {
-            found = true;
             truth[i] = true;
         }
     }
-    if (!found) return;
 
-    //forth filter
-     if (queryUser.watch(query).size() < 10) return;
      const unordered_map<size_t, vector<double> >& users = queryUser.watch(query);
 
      //Statistics
@@ -469,7 +413,7 @@ void collaborative_filtering::LearnOneEx(const Query& history, const uumap& quer
         if (user == similarUser) continue;
         examples.push_back(Example(embedding[similarUser], similarUserUrl));
     }
-     One_step(examples, truth, user, true);
+    One_step(examples, truth, embedding[user], true);
 
 }
 
@@ -497,7 +441,8 @@ void collaborative_filtering::LearnOneExForDocuments(const Query& history, const
      {
          examples.push_back(Example(document_embedding[history.urls[i]], i));
      }
-     One_step(examples, truth, user, false);
+     One_step(examples, truth, embedding[user], true);
+
 
 }
 
@@ -534,9 +479,9 @@ void collaborative_filtering::Learn_by_several_daya(const std::string& pathToDat
 //    }
 
     clock_t start = clock();
-    uumap queryUser(pathToData + "query_user_1_24");
-    uumap userUrl(pathToData + "user_url_1_24");
-    uumap queryRank(pathToData + "query_rank_1_24");
+    uumap queryUser(pathToData + "query_user_1_25");
+    uumap userUrl(pathToData + "user_url_1_25");
+    uumap queryRank(pathToData + "query_rank_1_25");
     counters.Set_user_url(userUrl);
     userUrl.clear();
     counters.Set_query_user(queryUser);
@@ -556,15 +501,15 @@ void collaborative_filtering::Learn_by_several_daya(const std::string& pathToDat
          }
          calculate_counters(dayData, counters);
          dayData.clear();
-         if (i < end_learning_day - 1 && print)
+         if (i <= end_learning_day - 1 && print)
          {
              filter = Test(counters.query_user, counters.user_url, counters.query_rank, end_learning_day, pathToData);
          }
 
-         if (i == end_learning_day - 1)
-         {
-            Test2(counters.query_user, counters.user_url, counters.query_rank, end_learning_day, pathToData, filter);
-         }
+//         if (i == end_learning_day - 1)
+//         {
+//            Test2(counters.query_user, counters.user_url, counters.query_rank, end_learning_day, pathToData, filter);
+//         }
     }
 
 }
@@ -693,6 +638,7 @@ void collaborative_filtering::TestOneEx(const uumap& queryUser, const uumap& use
     }
     vector<double> evristic(a);
     vector<double> my_evristic(a);
+    double sumUsersSimilarity = 0;
     for (auto j = users_map.begin(); j != users_map.end(); ++j)
     {
         size_t nearestUser = j->first;
@@ -712,13 +658,23 @@ void collaborative_filtering::TestOneEx(const uumap& queryUser, const uumap& use
         {
 
              evristic[clickedBestRank] +=  1;
-            //my_evristic[clickedBestRank] += similarity(embedding[user], embedding[nearestUser]);
+             sumUsersSimilarity += similarity(embedding[user], embedding[nearestUser]);
+             my_evristic[clickedBestRank] += similarity(embedding[user], embedding[nearestUser]);
         }
     }
-    for (int j = 0; j < 10; ++j)
-    {
-        my_evristic[j] += similarity(document_embedding[history.urls[j]], embedding[user]);
-    }
+
+    vector<double> my_evristic_documents(a);
+
+//    for (int j = 0; j < 10; ++j)
+//    {
+
+//        my_evristic[j] += similarity(document_embedding[history.urls[j]], embedding[user]);
+//    }
+
+//    for (int i = 0; i < 10; ++i)
+//    {
+//        my_evristic[i] = my_evristic[i] / sumUsersSimilarity + my_evristic_documents[i] / sumdocumentsSimilarity;
+//    }
 
     //if (!FindPersonWithSameClick(history, evristic, a)) return;
     //if (!IsHeruisticMoreThanThreshold(my_evristic, a)) return;
@@ -753,7 +709,7 @@ void collaborative_filtering::TestOneEx1(const uumap& queryUser, const uumap& us
     for (size_t i = coreIndex; i < dayDataVec.size(); i += numCores)
     {
        //if (i % 1000 == 0) std::cout << i << std::endl;
-       if (GetFilter(queryUser, userUrl, queryRank, dayDataVec[i]))
+       if (GetFilterForTest(queryUser, userUrl, queryRank, dayDataVec[i]))
        {
            examples.insert(i);
            TestOneEx(queryUser, userUrl, dayDataVec[i], ranker, ev, my);

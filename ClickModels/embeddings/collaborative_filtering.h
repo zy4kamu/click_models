@@ -78,12 +78,15 @@ private:
     std::unordered_map<size_t, std::vector<double>> document_embedding;
     std::ofstream res_file;
     Similarity_function f;
+
+    int min_number;
+    int max_number;
 private:
-    std::vector<double> res_one_position(const std::vector<Example>& examples, size_t user) const;
+    std::vector<double> res_one_position(const std::vector<Example>& examples, const std::vector<double>& user) const;
 public:
     std::unordered_map<size_t, std::vector<double>> embedding;
 public:
-    collaborative_filtering(double rate_, int dim_, const string& usersFile, const string& documentsFile);
+    collaborative_filtering(double rate_, int dim_, const string& usersFile, const string& documentsFile, const std::string& result_file, int min_n, int max_n);
     void LearnOneEx(const Query& history, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank);
     void LearnOneEx1(const std::vector<Query>& dayDataVec, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank,
                                              size_t coreIndex, size_t numCores);
@@ -92,7 +95,7 @@ public:
     void Learn(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const DayData& dayData);
     void One_step(const std::vector<Example>& examples,
                                            const std::vector<bool>& truth,
-                                           size_t user, bool change_user);
+                                           std::vector<double>& user, bool change_user);
     void One_step1( const std::vector<std::vector<Example>>& examples,
                                             const std::vector<std::vector<bool>>& truth,
                                             const std::vector<size_t>& users,
@@ -101,6 +104,8 @@ public:
     std::unordered_set<int> Test(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day, const std::string& pathToData);
 
     bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
+    bool GetFilterForTest(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
+
     void Test2(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day,
                                        const std::string& pathToData, const std::unordered_set<int>& examples);
     void TestOneEx(const uumap& queryUser, const uumap& userUrl,const Query& history, Result& ranker, Result& ev, Result& my);

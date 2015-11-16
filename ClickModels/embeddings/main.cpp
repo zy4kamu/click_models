@@ -12,8 +12,8 @@
 
 //void GetHistogramm(MyLearner& learner, int step);
 
-//string out_directory = "/home/stepan/click_models_data/";
-static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+string out_directory = "/home/stepan/click_models_data/";
+//static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
 //static string out_directory = "/home/anna/Рабочий стол/work/data/";
 
 
@@ -610,7 +610,7 @@ int main()
 //    uumap userUrl(out_directory + "user_url_1_25");
 //    uumap queryRank(out_directory + "query_rank_1_25");
 //    DayData dayData = read_day(out_directory + "data_by_days/26.txt");
-    collaborative_filtering learner(-1., 20, out_directory + "users", out_directory + "documents");
+
 //      std::vector<Example> examples;
 //      std::vector<bool> truth(10, false);
 //      truth[2] = true;
@@ -627,19 +627,34 @@ int main()
 //      {
 //        learner.One_step(examples,truth,9, true);
 //      }
-    for (int i = 0; i < 100; ++i)
+    int step = 10;
+    int j = 0;
+    while (j < 2000)
     {
-        learner.rate /= std::sqrt(i+1);
-        std::cout << " N ITERATION " << i << std::endl;
-        bool print = i % 1 == 0;
-        learner.Learn_by_several_daya(out_directory,25,27, print);
-        learner.rate *= std::sqrt(i+1);
+        if (j >= 100 && step < 100) step = 100;
+        if (j >= 1000 && step < 10000) step = 100000;
+        int min_n = j;
+        int max_n = j+step;
+        collaborative_filtering learner(-1, 20, out_directory + "users", out_directory + "documents",
+                                        out_directory + "data_stat/histogramms/result_" + std::to_string(min_n) + "_" + std::to_string(max_n),
+                                        min_n, max_n);
+        for (int i = 0; i < 15; ++i)
+        {
+            learner.rate /= std::sqrt(i+1);
+            std::cout << " N ITERATION " << i << std::endl;
+            bool print = i % 1 == 0;
+            learner.Learn_by_several_daya(out_directory,26,27, print);
+            learner.rate *= std::sqrt(i+1);
+        }
+        j += step;
+
     }
+
 //    queryUser.clear();
 //    userUrl.clear();
 //    queryRank.clear();
 //    dayData.clear();
-    learner.Print(out_directory + "embedding/model");
+//    learner.Print(out_directory + "embedding/model");
 
 //    std::map<size_t, size_t> users_in_train =  Get_number_trainig_example_with_user(out_directory + "data_stat/pairs_26");
 //    Test2(users_in_train);
