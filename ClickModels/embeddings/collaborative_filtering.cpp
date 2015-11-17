@@ -3,10 +3,10 @@
 #include <thread>
 #include <algorithm>
 
-//static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
-static string out_directory = "/home/stepan/click_models_data/";
+static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+//static string out_directory = "/home/stepan/click_models_data/";
 
-size_t numThreads = 8;
+size_t numThreads = 4;
 
 double similarity(const std::vector<double>& x,const std::vector<double>& y)
 {
@@ -135,7 +135,7 @@ bool collaborative_filtering::GetFilter(const uumap& queryUser, const uumap& use
 bool collaborative_filtering::GetFilterForTest(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
 {
     typedef bool(*filter) (const uumap&, const uumap&, const uumap&, const Query&);
-    vector<filter> filters = {Filter1, Filter2,Filter4};
+    vector<filter> filters = {Filter1, Filter2, Filter4};
     for (size_t i = 0; i < filters.size(); ++i)
     {
         if (!filters[i](queryUser, userUrl, queryRank, history)) return false;
@@ -363,7 +363,7 @@ void collaborative_filtering::LearnOneEx1(const std::vector<Query>& dayDataVec, 
     for (size_t i = coreIndex; i < dayDataVec.size(); i += numCores)
     {
         LearnOneEx(dayDataVec[i], queryUser, userUrl, queryRank);
-       // LearnOneExForDocuments(dayDataVec[i], queryUser, userUrl, queryRank);
+        LearnOneExForDocuments(dayDataVec[i], queryUser, userUrl, queryRank);
     }
 }
 
@@ -615,7 +615,7 @@ bool IsHeruisticMoreThanThreshold(const vector<double>& evristic, const vector<d
     return true;
 }
 
-void collaborative_filtering::TestOneEx(const uumap& queryUser, const uumap& userUrl,
+void collaborative_filtering::TestOneEx(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank,
                                         const Query& history, Result& ranker,
                                         Result& ev, Result& my)
 {
@@ -659,17 +659,22 @@ void collaborative_filtering::TestOneEx(const uumap& queryUser, const uumap& use
 
              evristic[clickedBestRank] +=  1;
              sumUsersSimilarity += similarity(embedding[user], embedding[nearestUser]);
-             my_evristic[clickedBestRank] += similarity(embedding[user], embedding[nearestUser]);
+             //my_evristic[clickedBestRank] += similarity(embedding[user], embedding[nearestUser]);
         }
     }
 
     vector<double> my_evristic_documents(a);
 
-//    for (int j = 0; j < 10; ++j)
-//    {
-
-//        my_evristic[j] += similarity(document_embedding[history.urls[j]], embedding[user]);
-//    }
+    for (int j = 0; j < 10; ++j)
+    {        
+        const vector<double>& rank0 = queryRank.watch(query, j);
+        double r = 1;
+        if (rank0.size() > 0)
+        {
+            r += rank0[0];
+        }
+        my_evristic[j] += (r) * similarity(document_embedding[history.urls[j]], embedding[user]);
+    }
 
 //    for (int i = 0; i < 10; ++i)
 //    {
@@ -712,7 +717,7 @@ void collaborative_filtering::TestOneEx1(const uumap& queryUser, const uumap& us
        if (GetFilterForTest(queryUser, userUrl, queryRank, dayDataVec[i]))
        {
            examples.insert(i);
-           TestOneEx(queryUser, userUrl, dayDataVec[i], ranker, ev, my);
+           TestOneEx(queryUser, userUrl, queryRank, dayDataVec[i], ranker, ev, my);
        }
     }
 }
@@ -727,13 +732,14 @@ void collaborative_filtering::TestOneExByIndex1(const uumap& queryUser, const uu
     for (size_t i = coreIndex; i < dayDataVec.size(); i += numCores)
     {
        //if (i % 1000 == 0) std::cout << i << std::endl;
-       if (examples.find(i) != examples.end() && !Filter2(queryUser,userUrl,queryRank,dayDataVec[i]))
+       if (examples.find(i) != examples.end() && Filter2(queryUser,userUrl,queryRank,dayDataVec[i]) &&
+               Filter3Mine(queryUser, userUrl, queryRank, dayDataVec[i], min_number, max_number))
+
        {
-            TestOneEx(queryUser, userUrl, dayDataVec[i], ranker, ev, my);
+            TestOneEx(queryUser, userUrl, queryRank, dayDataVec[i], ranker, ev, my);
        }
     }
 }
-
 std::unordered_set<int> collaborative_filtering::Test(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day,
                                    const std::string& pathToData)
 {

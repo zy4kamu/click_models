@@ -108,7 +108,7 @@ public:
 
     void Test2(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day,
                                        const std::string& pathToData, const std::unordered_set<int>& examples);
-    void TestOneEx(const uumap& queryUser, const uumap& userUrl,const Query& history, Result& ranker, Result& ev, Result& my);
+    void TestOneEx(const uumap& queryUser, const uumap& userUrl,const uumap& queryRank,const Query& history, Result& ranker, Result& ev, Result& my);
     void TestOneEx1(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank,
                                              const std::vector<Query>& dayDataVec,
                                              Result& ranker, Result& ev, Result& my,
