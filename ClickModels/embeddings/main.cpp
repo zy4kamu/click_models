@@ -12,8 +12,8 @@
 
 //void GetHistogramm(MyLearner& learner, int step);
 
-//string out_directory = "/home/stepan/click_models_data/";
-static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+string out_directory = "/home/stepan/click_models_data/";
+//static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
 //static string out_directory = "/home/anna/Рабочий стол/work/data/";
 
 

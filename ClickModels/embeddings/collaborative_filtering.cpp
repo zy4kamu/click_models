@@ -3,10 +3,10 @@
 #include <thread>
 #include <algorithm>
 
-static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
-//static string out_directory = "/home/stepan/click_models_data/";
+//static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
+static string out_directory = "/home/stepan/click_models_data/";
 
-size_t numThreads = 4;
+size_t numThreads = 8;
 
 double similarity(const std::vector<double>& x,const std::vector<double>& y)
 {
@@ -673,7 +673,7 @@ void collaborative_filtering::TestOneEx(const uumap& queryUser, const uumap& use
         {
             r += rank0[0];
         }
-        my_evristic[j] += (r) * similarity(document_embedding[history.urls[j]], embedding[user]);
+        my_evristic[j] += (r) * similarity(document_embedding[history.urls[j]], embedding[user]) * (evristic[j] + 1);
     }
 
 //    for (int i = 0; i < 10; ++i)
