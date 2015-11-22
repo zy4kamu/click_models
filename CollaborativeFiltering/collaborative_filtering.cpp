@@ -2,6 +2,7 @@
 #include <algorithm>
 
 #include "FileReader.h"
+#include "FileWriter.h"
 
 namespace collaborative_filtering
 {
@@ -13,9 +14,9 @@ CollaborativeFiltering::CollaborativeFiltering()
 CollaborativeFiltering::CollaborativeFiltering(
     const string& folder, size_t dimension)
     : dimension(dimension)
-    , userEmbedding(folder + "user", dimension)
-    , queryEmbedding(folder + "query", dimension)
-    , docEmbedding(folder + "doc", dimension)
+    , userEmbedding(folder + "users", dimension)
+    , queryEmbedding(folder + "queries", dimension)
+    , docEmbedding(folder + "docs", dimension)
 {
     FileManager::Read(folder + "examinations", &this->examinations);
 }
@@ -29,6 +30,7 @@ void CollaborativeFiltering::initialize(const vector<size_t>& users
     this->userEmbedding.initialize(users, dimension);
     this->queryEmbedding.initialize(queries, dimension);
     this->docEmbedding.initialize(docs, dimension);
+    this->examinations.resize(10, 0.5);
 }
 
 void CollaborativeFiltering::write(const string& folder)
@@ -36,6 +38,7 @@ void CollaborativeFiltering::write(const string& folder)
     this->userEmbedding.write(folder + "users");
     this->queryEmbedding.write(folder + "queries");
     this->docEmbedding.write(folder + "docs");
+    FileManager::Write(folder + "examinations", this->examinations);
 }
 
 double CollaborativeFiltering::estimateAttractiveness(
@@ -73,6 +76,22 @@ vector<size_t> CollaborativeFiltering::sort(const Query& serp)
     std::sort(indecies.begin(), indecies.end(),
         [&](size_t i1, size_t i2) {return probs[i1] > probs[i2]; });
     return indecies;
+}
+
+double CollaborativeFiltering::calculateLogLikelihood(const Query& serp)
+{
+    double loglikelihood = 0;
+    vector<double> probs = this->calculateClickProbabilities(serp);
+    for (size_t i = 0; i < serp.type.size(); ++i)
+    {
+        double toAdd = serp.type[i] == 2 ? std::log(probs[i]) : std::log(1.0 - probs[i]);
+        if (std::isinf(toAdd)) {
+            std::cout << "collaborative filtering:calculateLogLikelihood: zero probability ..." << std::endl;
+        } else {
+            loglikelihood += toAdd;
+        }
+    }
+    return loglikelihood;
 }
 
 }

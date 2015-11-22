@@ -17,6 +17,7 @@ Embedding::Embedding()
 }
 
 Embedding::Embedding(const string& file, size_t dimension)
+    : dimension(dimension)
 {
     this->readEmbedding(file + ".embedding");
     FileManager::Read(file + ".map", &this->itemToIndex);
@@ -24,6 +25,7 @@ Embedding::Embedding(const string& file, size_t dimension)
 
 void Embedding::readEmbedding(const string& file)
 {
+    std::cout << "embedding::readEmbedding " << file << std::endl;
     int fdIn;
     if ((fdIn = open(file.c_str(), O_RDONLY)) < 0)
     {
@@ -47,6 +49,8 @@ void Embedding::readEmbedding(const string& file)
     }
 
     memcpy(&(*this->embedding.begin()), source, fileSize);
+    std::cout << "embedding: first element " << this->embedding[0] << std::endl;
+    std::cout << "embedding: last element " << this->embedding.back() << std::endl;
 
     if (munmap(source, fileSize) < 0)
     {
@@ -61,7 +65,7 @@ void Embedding::initialize(const vector<size_t>& items, size_t dimension)
     this->dimension = dimension;
     for (size_t item : items)
     {
-        this->itemToIndex[item] = items.size();
+        this->itemToIndex[item] = this->itemToIndex.size();
     }
     std::random_device device;
     std::uniform_real_distribution<double> distribution(0, 1);
@@ -103,6 +107,7 @@ double* Embedding::get(size_t item)
 {
     auto found = this->itemToIndex.find(item);
     if (found == this->itemToIndex.end()) {
+        std::cout << "embedding not found item ..." << std::endl;
         return 0;
     } else {
         return embedding.begin().base() + this->dimension * found->second;

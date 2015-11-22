@@ -23,6 +23,8 @@ public:
     void write(const string& folder);
 
     vector<size_t> sort(const Query& serp);
+
+    double calculateLogLikelihood(const Query& serp);
 private:
     double estimateAttractiveness(size_t user, size_t query, size_t doc);
 

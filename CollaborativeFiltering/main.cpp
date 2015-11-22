@@ -14,7 +14,7 @@ using collaborative_filtering::CollaborativeFiltering;
 
 const string DAY_DATA_FOLDER = "/home/stepan/click_models_data/data_by_days/";
 const string INPUT_FOLDER = "/home/stepan/click_models_data/collaborative_filtering/input/";
-const string MODEL_PARAMETERS_FOLDER = "/home/stepan/click_models_data/collaborative_filtering/model_parameters/";
+const string INITIAL_MODEL_PARAMETERS_FOLDER = "/home/stepan/click_models_data/collaborative_filtering/initial_model_parameters/";
 const size_t DIMENSION = 20;
 
 void getUserDocQueries()
@@ -61,12 +61,38 @@ void prepareCollaborativeFiltering()
     std::cout << "initializing ..." << std::endl;
     processor.initialize(users, queries, docs, DIMENSION);
     std::cout << "writing to file ..." << std::endl;
-    processor.write(MODEL_PARAMETERS_FOLDER);
+    processor.write(INITIAL_MODEL_PARAMETERS_FOLDER);
+}
+
+void getLogLikelihood()
+{
+    CollaborativeFiltering processor(
+        INITIAL_MODEL_PARAMETERS_FOLDER, DIMENSION);
+    double sumLikelihood = 0;
+    size_t numQueries = 0;
+    for (size_t i = 1; i <= 27; ++i)
+    {
+        DayData data = read_day(DAY_DATA_FOLDER + std::to_string(i) + ".txt");
+        for (const auto& personData : data)
+        {
+            const unordered_map<size_t, Query>& sessionData = personData.second;
+            for (const auto& session : sessionData)
+            {
+                const Query& serp = session.second;
+                sumLikelihood += processor.calculateLogLikelihood(serp);
+                ++numQueries;
+            }
+        }
+        double likelihood = sumLikelihood / numQueries;
+        std::cout << "likelihood = " << likelihood << std::endl;
+    }
 }
 
 int main()
 {
     //getUserDocQueries();
-    prepareCollaborativeFiltering();
+    //prepareCollaborativeFiltering();
+    getLogLikelihood();
+    //learn();
 }
 
