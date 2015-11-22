@@ -7,11 +7,13 @@
 #include "FileReader.h"
 #include "FileWriter.h"
 #include "macro_parameters.h"
+#include "learner.h"
 
 using std::string;
 using std::unordered_set;
 
 using collaborative_filtering::CollaborativeFiltering;
+using collaborative_filtering::Learner;
 
 void getUserDocQueries()
 {
@@ -110,12 +112,18 @@ void calculateUQD()
     }
 }
 
+void learn()
+{
+    Learner learner(INITIAL_MODEL_PARAMETERS_FOLDER, DIMENSION);
+    learner.learn();
+}
+
 int main()
 {
     //getUserDocQueries();
-    prepareCollaborativeFiltering();
+    //prepareCollaborativeFiltering();
     //getLogLikelihood();
     //calculateUQD();
-    //learn();
+    learn();
 }
 

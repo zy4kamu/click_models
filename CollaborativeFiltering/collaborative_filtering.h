@@ -28,10 +28,13 @@ public:
 
     void clear();
 
+    void setParameters(const vector<double>& params);
+
     Embedding userEmbedding;
     Embedding queryEmbedding;
     Embedding docEmbedding;
     double* examinations;
+    vector<double> parameters;
 private:
     double estimateAttractiveness(size_t user, size_t query, size_t doc);
 
@@ -40,7 +43,6 @@ private:
     void readExaminations(const string& folder);
 
     size_t dimension;
-    vector<double> parameters;
 };
 
 }

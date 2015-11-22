@@ -87,6 +87,22 @@ void CollaborativeFiltering::initialize(const vector<size_t>& users
     this->docEmbedding.initialize(docs, dimension);
 }
 
+void CollaborativeFiltering::setParameters(const vector<double>& params)
+{
+    this->parameters = parameters;
+    double* ptr = this->parameters.begin().base();
+    this->examinations = ptr;
+
+    ptr += SERP_SIZE;
+    this->userEmbedding.setPtr(ptr);
+
+    ptr += this->userEmbedding.size() * dimension;
+    this->queryEmbedding.setPtr(ptr);
+
+    ptr += this->queryEmbedding.size() * dimension;
+    this->docEmbedding.setPtr(ptr);
+}
+
 void CollaborativeFiltering::write(const string& folder)
 {
     this->userEmbedding.write(folder + "users");

@@ -17,6 +17,9 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../ClickModels
     ${CMAKE_CURRENT_SOURCE_DIR}/../FileManager
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Optimization/Clib
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Optimization/EventHandler
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Optimization/Optimizer
     ${CMAKE_CURRENT_SOURCE_DIR}/../Tools)
 link_directories()
 
