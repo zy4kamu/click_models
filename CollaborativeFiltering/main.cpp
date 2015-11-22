@@ -6,16 +6,12 @@
 #include "day_data.h"
 #include "FileReader.h"
 #include "FileWriter.h"
+#include "macro_parameters.h"
 
 using std::string;
 using std::unordered_set;
 
 using collaborative_filtering::CollaborativeFiltering;
-
-const string DAY_DATA_FOLDER = "/home/stepan/click_models_data/data_by_days/";
-const string INPUT_FOLDER = "/home/stepan/click_models_data/collaborative_filtering/input/";
-const string INITIAL_MODEL_PARAMETERS_FOLDER = "/home/stepan/click_models_data/collaborative_filtering/initial_model_parameters/";
-const size_t DIMENSION = 20;
 
 void getUserDocQueries()
 {

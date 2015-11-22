@@ -1,13 +1,12 @@
 #include <collaborative_filtering.h>
 #include <algorithm>
 
+#include "macro_parameters.h"
 #include "FileReader.h"
 #include "FileWriter.h"
 
 namespace collaborative_filtering
 {
-
-static const size_t SERP_SIZE = 10;
 
 CollaborativeFiltering::CollaborativeFiltering(size_t dimension)
     : userEmbedding(dimension)
@@ -148,6 +147,11 @@ double CollaborativeFiltering::calculateLogLikelihood(const Query& serp)
         }
     }
     return loglikelihood;
+}
+
+void CollaborativeFiltering::clear()
+{
+    memset(parameters.begin().base(), 0, parameters.size() * sizeof(double));
 }
 
 }

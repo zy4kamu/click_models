@@ -25,6 +25,13 @@ public:
     vector<size_t> sort(const Query& serp);
 
     double calculateLogLikelihood(const Query& serp);
+
+    void clear();
+
+    Embedding userEmbedding;
+    Embedding queryEmbedding;
+    Embedding docEmbedding;
+    double* examinations;
 private:
     double estimateAttractiveness(size_t user, size_t query, size_t doc);
 
@@ -33,10 +40,6 @@ private:
     void readExaminations(const string& folder);
 
     size_t dimension;
-    Embedding userEmbedding;
-    Embedding queryEmbedding;
-    Embedding docEmbedding;
-    double* examinations;
     vector<double> parameters;
 };
 
