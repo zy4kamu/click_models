@@ -7,18 +7,57 @@
 namespace collaborative_filtering
 {
 
-CollaborativeFiltering::CollaborativeFiltering()
+static const size_t SERP_SIZE = 10;
+
+CollaborativeFiltering::CollaborativeFiltering(size_t dimension)
+    : userEmbedding(dimension)
+    , queryEmbedding(dimension)
+    , docEmbedding(dimension)
 {
 }
 
 CollaborativeFiltering::CollaborativeFiltering(
     const string& folder, size_t dimension)
     : dimension(dimension)
-    , userEmbedding(folder + "users", dimension)
-    , queryEmbedding(folder + "queries", dimension)
-    , docEmbedding(folder + "docs", dimension)
+    , userEmbedding(dimension)
+    , queryEmbedding(dimension)
+    , docEmbedding(dimension)
 {
-    FileManager::Read(folder + "examinations", &this->examinations);
+    this->userEmbedding.readDictionary(folder + "users");
+    this->queryEmbedding.readDictionary(folder + "queries");
+    this->docEmbedding.readDictionary(folder + "docs");
+
+    size_t fullSize = SERP_SIZE + dimension * (
+        this->userEmbedding.size() +
+        this->queryEmbedding.size() +
+        this->docEmbedding.size());
+    this->parameters.resize(fullSize);
+
+    this->readExaminations(folder);
+
+    double* ptr = this->parameters.begin().base();
+
+    ptr += SERP_SIZE;
+    this->userEmbedding.setPtr(ptr);
+    this->userEmbedding.readEmbedding(folder + "users");
+
+    ptr += this->userEmbedding.size() * dimension;
+    this->queryEmbedding.setPtr(ptr);
+    this->queryEmbedding.readEmbedding(folder + "queries");
+
+    ptr += this->queryEmbedding.size() * dimension;
+    this->docEmbedding.setPtr(ptr);
+    this->docEmbedding.readEmbedding(folder + "docs");
+}
+
+void CollaborativeFiltering::readExaminations(const string& folder)
+{
+    vector<double> ex;
+    FileManager::Read(folder + "examinations", &ex);
+    for (size_t i = 0; i < ex.size(); ++i)
+    {
+        this->examinations[i] = examinations[i];
+    }
 }
 
 void CollaborativeFiltering::initialize(const vector<size_t>& users
@@ -27,10 +66,26 @@ void CollaborativeFiltering::initialize(const vector<size_t>& users
     , size_t dimension)
 {
     this->dimension = dimension;
+
+    size_t fullSize = SERP_SIZE + dimension * (users.size() + queries.size() + docs.size());
+    this->parameters.resize(fullSize);
+
+    double* ptr = this->parameters.begin().base();
+    this->examinations = ptr;
+    for (size_t i = 0; i < SERP_SIZE; ++i)
+        this->examinations[i] = 0.5;
+
+    ptr += SERP_SIZE;
+    this->userEmbedding.setPtr(ptr);
     this->userEmbedding.initialize(users, dimension);
+
+    ptr += users.size() * dimension;
+    this->queryEmbedding.setPtr(ptr);
     this->queryEmbedding.initialize(queries, dimension);
+
+    ptr += queries.size() * dimension;
+    this->docEmbedding.setPtr(ptr);
     this->docEmbedding.initialize(docs, dimension);
-    this->examinations.resize(10, 0.5);
 }
 
 void CollaborativeFiltering::write(const string& folder)
@@ -38,7 +93,8 @@ void CollaborativeFiltering::write(const string& folder)
     this->userEmbedding.write(folder + "users");
     this->queryEmbedding.write(folder + "queries");
     this->docEmbedding.write(folder + "docs");
-    FileManager::Write(folder + "examinations", this->examinations);
+    vector<double> ex(this->examinations, this->examinations + SERP_SIZE);
+    FileManager::Write(folder + "examinations", ex);
 }
 
 double CollaborativeFiltering::estimateAttractiveness(

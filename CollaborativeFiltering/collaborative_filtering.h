@@ -11,7 +11,7 @@ using std::vector;
 class CollaborativeFiltering
 {
 public:
-    CollaborativeFiltering();
+    CollaborativeFiltering(size_t dimension);
 
     CollaborativeFiltering(const string& folder, size_t dimension);
 
@@ -30,11 +30,14 @@ private:
 
     vector<double> calculateClickProbabilities(const Query& serp);
 
+    void readExaminations(const string& folder);
+
     size_t dimension;
     Embedding userEmbedding;
     Embedding queryEmbedding;
     Embedding docEmbedding;
-    vector<double> examinations;
+    double* examinations;
+    vector<double> parameters;
 };
 
 }

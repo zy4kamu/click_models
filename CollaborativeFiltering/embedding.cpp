@@ -12,15 +12,20 @@
 namespace collaborative_filtering
 {
 
-Embedding::Embedding()
+Embedding::Embedding(size_t dimension)
+    : dimension(dimension)
 {
 }
 
-Embedding::Embedding(const string& file, size_t dimension)
-    : dimension(dimension)
+void Embedding::readDictionary(const string& file)
 {
-    this->readEmbedding(file + ".embedding");
     FileManager::Read(file + ".map", &this->itemToIndex);
+    this->numberOfPoints = this->itemToIndex.size();
+}
+
+void Embedding::setPtr(double* ptr)
+{
+    this->embedding = ptr;
 }
 
 void Embedding::readEmbedding(const string& file)
@@ -38,9 +43,6 @@ void Embedding::readEmbedding(const string& file)
         perror("embedding.cpp: couldn't find file size");
     }
     size_t fileSize = fileStatistics.st_size;
-    size_t numberOfDoubles = fileSize / sizeof(double);
-    this->numberOfPoints = numberOfDoubles / dimension;
-    this->embedding.resize(numberOfDoubles);
 
     void* source;
     if ((source = mmap(0, fileSize, PROT_READ, MAP_SHARED, fdIn, 0)) == MAP_FAILED)
@@ -48,9 +50,9 @@ void Embedding::readEmbedding(const string& file)
         perror("embedding.cpp: couldn't use mmap to map file to pointer");
     }
 
-    memcpy(&(*this->embedding.begin()), source, fileSize);
+    memcpy(this->embedding, source, fileSize);
     std::cout << "embedding: first element " << this->embedding[0] << std::endl;
-    std::cout << "embedding: last element " << this->embedding.back() << std::endl;
+    std::cout << "embedding: last element " << this->embedding[this->numberOfPoints - 1] << std::endl;
 
     if (munmap(source, fileSize) < 0)
     {
@@ -69,7 +71,6 @@ void Embedding::initialize(const vector<size_t>& items, size_t dimension)
     }
     std::random_device device;
     std::uniform_real_distribution<double> distribution(0, 1);
-    embedding.resize(items.size() * dimension);
     for (size_t i = 0; i < items.size(); ++i)
     {
         if (i % 10000 == 0)
@@ -97,8 +98,7 @@ void Embedding::initialize(const vector<size_t>& items, size_t dimension)
 void Embedding::write(const string& file)
 {
     ofstream out(file + ".embedding", ios::binary);
-    double* start = this->embedding.begin().base();
-    out.write((char*)start, this->embedding.size() * sizeof(double));
+    out.write((char*)this->embedding, this->numberOfPoints * this->dimension * sizeof(double));
     out.close();
     FileManager::Write(file + ".map", this->itemToIndex);
 }
@@ -110,8 +110,13 @@ double* Embedding::get(size_t item)
         std::cout << "embedding not found item ..." << std::endl;
         return 0;
     } else {
-        return embedding.begin().base() + this->dimension * found->second;
+        return embedding + this->dimension * found->second;
     }
+}
+
+size_t Embedding::size()
+{
+    return this->numberOfPoints;
 }
 
 }

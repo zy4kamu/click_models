@@ -12,17 +12,18 @@ using std::string;
 class Embedding
 {
 public:
-    Embedding();
-    Embedding(const string& file, size_t dimension);
+    Embedding(size_t dimension);
+    void readDictionary(const string& file);
+    void setPtr(double* ptr);
+    void readEmbedding(const string& file);
     void initialize(const vector<size_t>& items, size_t dimension);
     void write(const string& file);
     double* get(size_t item);
+    size_t size();
 private:
-    void readEmbedding(const string& file);
-
     size_t numberOfPoints;
     size_t dimension;
-    vector<double> embedding;
+    double* embedding;
     unordered_map<size_t, size_t> itemToIndex;
 };
 

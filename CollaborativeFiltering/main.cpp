@@ -50,7 +50,7 @@ void getUserDocQueries()
 
 void prepareCollaborativeFiltering()
 {
-    CollaborativeFiltering processor;
+    CollaborativeFiltering processor(DIMENSION);
     vector<size_t> users, queries, docs;
     std::cout << "reading users ..." << std::endl;
     FileManager::Read(INPUT_FOLDER + "users", &users);
@@ -88,11 +88,38 @@ void getLogLikelihood()
     }
 }
 
+void calculateUQD()
+{
+    unordered_set<string> uqd;
+    unordered_set<size_t> users, queries, docs;
+    for (size_t i = 1; i <= 27; ++i)
+    {
+        DayData data = read_day(DAY_DATA_FOLDER + std::to_string(i) + ".txt");
+        for (const auto& personData : data)
+        {
+            const unordered_map<size_t, Query>& sessionData = personData.second;
+            for (const auto& session : sessionData)
+            {
+                const Query& serp = session.second;
+                size_t user = serp.person;
+                size_t query = serp.id;
+                string uq = std::to_string(user) + "_" + std::to_string(query) + "_";
+                for (size_t doc : serp.urls)
+                {
+                    uqd.insert(uq + std::to_string(doc));
+                }
+            }
+        }
+        std::cout << "number of uqd = " << uqd.size() << std::endl;
+    }
+}
+
 int main()
 {
     //getUserDocQueries();
-    //prepareCollaborativeFiltering();
-    getLogLikelihood();
+    prepareCollaborativeFiltering();
+    //getLogLikelihood();
+    //calculateUQD();
     //learn();
 }
 
