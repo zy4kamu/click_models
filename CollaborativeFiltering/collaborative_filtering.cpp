@@ -129,7 +129,7 @@ double CollaborativeFiltering::estimateAttractiveness(
     double sum = 0;
     for (size_t i = 0; i < this->dimension; ++i)
     {
-        sum += regularize(uEm[i]) * regularize(dEm[i]) * regularize(qEm[i]);
+        sum += uEm[i] * dEm[i] * qEm[i];
     }
     return sum;
 }
@@ -142,7 +142,7 @@ vector<double> CollaborativeFiltering::calculateClickProbabilities(const Query& 
     {
         double attractiveness = this->estimateAttractiveness(
             serp.person, serp.id, serp.urls[i]);
-        probs[i] = regularize(this->examinations[i]) * attractiveness;
+        probs[i] = regularize(this->examinations[i] * attractiveness);
     }
     return probs;
 }
