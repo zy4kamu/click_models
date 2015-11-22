@@ -18,7 +18,7 @@ using collaborative_filtering::Learner;
 void getUserDocQueries()
 {
     unordered_set<size_t> users, queries, docs;
-    for (size_t i = 1; i <= 27; ++i)
+    for (size_t i = FIRST_TRAINING_DAY; i <= LAST_TRAINING_DAY; ++i)
     {
         DayData data = read_day(DAY_DATA_FOLDER + std::to_string(i) + ".txt");
         for (const auto& personData : data)
@@ -68,7 +68,7 @@ void getLogLikelihood()
         INITIAL_MODEL_PARAMETERS_FOLDER, DIMENSION);
     double sumLikelihood = 0;
     size_t numQueries = 0;
-    for (size_t i = 1; i <= 27; ++i)
+    for (size_t i = FIRST_TRAINING_DAY; i <= LAST_TRAINING_DAY; ++i)
     {
         DayData data = read_day(DAY_DATA_FOLDER + std::to_string(i) + ".txt");
         for (const auto& personData : data)
@@ -90,7 +90,7 @@ void calculateUQD()
 {
     unordered_set<string> uqd;
     unordered_set<size_t> users, queries, docs;
-    for (size_t i = 1; i <= 27; ++i)
+    for (size_t i = FIRST_TRAINING_DAY; i <= LAST_TRAINING_DAY; ++i)
     {
         DayData data = read_day(DAY_DATA_FOLDER + std::to_string(i) + ".txt");
         for (const auto& personData : data)

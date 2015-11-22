@@ -1,3 +1,6 @@
+#ifndef COLLABORATIVE_FILTERING
+#define COLLABORATIVE_FILTERING
+
 #include <vector>
 
 #include "embedding.h"
@@ -46,3 +49,5 @@ private:
 };
 
 }
+
+#endif

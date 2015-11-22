@@ -46,7 +46,7 @@ DayData read_day(const string& file)
     size_t enumerator = 0;
     while(!input.eof())
     {
-        if (++enumerator % 1000000 == 0) {
+        if (++enumerator % 10000000 == 0) {
             std::cout << "read day from file " << file << " ; iteration = " << enumerator << std::endl;
         }
         input.read((char*)&person, sizeof(size_t));

@@ -33,6 +33,6 @@ file(GLOB headers
 add_library(collaborative-filtering STATIC ${sources} ${headers} ${sourceheaders})
 
 add_executable(collaborative-filtering-app main.cpp)
-target_link_libraries(collaborative-filtering-app LINK_PUBLIC pthread collaborative-filtering tools csvManager click-models)
+target_link_libraries(collaborative-filtering-app LINK_PUBLIC pthread collaborative-filtering tools csvManager click-models optimization gomp)
 
 

@@ -34,28 +34,29 @@ CollaborativeFiltering::CollaborativeFiltering(
 
     this->readExaminations(folder);
 
-    double* ptr = this->parameters.begin().base();
+    double* ptr = &(this->parameters[0]);
 
     ptr += SERP_SIZE;
     this->userEmbedding.setPtr(ptr);
-    this->userEmbedding.readEmbedding(folder + "users");
+    this->userEmbedding.readEmbedding(folder + "users.embedding");
 
     ptr += this->userEmbedding.size() * dimension;
     this->queryEmbedding.setPtr(ptr);
-    this->queryEmbedding.readEmbedding(folder + "queries");
+    this->queryEmbedding.readEmbedding(folder + "queries.embedding");
 
     ptr += this->queryEmbedding.size() * dimension;
     this->docEmbedding.setPtr(ptr);
-    this->docEmbedding.readEmbedding(folder + "docs");
+    this->docEmbedding.readEmbedding(folder + "docs.embedding");
 }
 
 void CollaborativeFiltering::readExaminations(const string& folder)
 {
     vector<double> ex;
     FileManager::Read(folder + "examinations", &ex);
+    this->examinations = &(this->parameters[0]);
     for (size_t i = 0; i < ex.size(); ++i)
     {
-        this->examinations[i] = examinations[i];
+        this->examinations[i] = ex[i];
     }
 }
 
@@ -69,7 +70,7 @@ void CollaborativeFiltering::initialize(const vector<size_t>& users
     size_t fullSize = SERP_SIZE + dimension * (users.size() + queries.size() + docs.size());
     this->parameters.resize(fullSize);
 
-    double* ptr = this->parameters.begin().base();
+    double* ptr = &(this->parameters[0]);
     this->examinations = ptr;
     for (size_t i = 0; i < SERP_SIZE; ++i)
         this->examinations[i] = 0.5;
@@ -89,8 +90,8 @@ void CollaborativeFiltering::initialize(const vector<size_t>& users
 
 void CollaborativeFiltering::setParameters(const vector<double>& params)
 {
-    this->parameters = parameters;
-    double* ptr = this->parameters.begin().base();
+    this->parameters = params;
+    double* ptr = &(this->parameters[0]);
     this->examinations = ptr;
 
     ptr += SERP_SIZE;
@@ -112,6 +113,13 @@ void CollaborativeFiltering::write(const string& folder)
     FileManager::Write(folder + "examinations", ex);
 }
 
+static double regularize(double val)
+{
+    val = std::max(val, EPS);
+    val = std::min(val, 1.0 - EPS);
+    return val;
+}
+
 double CollaborativeFiltering::estimateAttractiveness(
     size_t user, size_t query, size_t doc)
 {
@@ -121,7 +129,7 @@ double CollaborativeFiltering::estimateAttractiveness(
     double sum = 0;
     for (size_t i = 0; i < this->dimension; ++i)
     {
-        sum += uEm[i] * dEm[i] * qEm[i];
+        sum += regularize(uEm[i]) * regularize(dEm[i]) * regularize(qEm[i]);
     }
     return sum;
 }
@@ -134,7 +142,7 @@ vector<double> CollaborativeFiltering::calculateClickProbabilities(const Query& 
     {
         double attractiveness = this->estimateAttractiveness(
             serp.person, serp.id, serp.urls[i]);
-        probs[i] = this->examinations[i] * attractiveness;
+        probs[i] = regularize(this->examinations[i]) * attractiveness;
     }
     return probs;
 }
@@ -155,19 +163,16 @@ double CollaborativeFiltering::calculateLogLikelihood(const Query& serp)
     vector<double> probs = this->calculateClickProbabilities(serp);
     for (size_t i = 0; i < serp.type.size(); ++i)
     {
-        double toAdd = serp.type[i] == 2 ? std::log(probs[i]) : std::log(1.0 - probs[i]);
-        if (std::isinf(toAdd)) {
-            std::cout << "collaborative filtering:calculateLogLikelihood: zero probability ..." << std::endl;
-        } else {
-            loglikelihood += toAdd;
-        }
+        double prob = probs[i];
+        double toAdd = serp.type[i] == 2 ? std::log(prob) : std::log(1.0 - prob);
+        loglikelihood += toAdd;
     }
     return loglikelihood;
 }
 
 void CollaborativeFiltering::clear()
 {
-    memset(parameters.begin().base(), 0, parameters.size() * sizeof(double));
+    memset(&(parameters[0]), 0, parameters.size() * sizeof(double));
 }
 
 }

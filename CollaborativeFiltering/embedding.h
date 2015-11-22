@@ -1,3 +1,6 @@
+#ifndef EMBEDDING
+#define EMBEDDING
+
 #include <vector>
 #include <unordered_map>
 #include <string>
@@ -28,3 +31,5 @@ private:
 };
 
 }
+
+#endif
