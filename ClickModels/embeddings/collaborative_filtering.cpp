@@ -121,7 +121,7 @@ bool Filter4(const uumap& queryUser, const uumap& userUrl, const uumap& queryRan
     return true;
 }
 
-bool collaborative_filtering::GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
+bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
 {
     typedef bool(*filter) (const uumap&, const uumap&, const uumap&, const Query&);
     vector<filter> filters = {Filter1, Filter2, Filter3, Filter4};

@@ -6,7 +6,7 @@
 #include "embedding.h"
 #include "day_data.h"
 
-namespace collaborative_filtering
+namespace collaborativefiltering
 {
 
 using std::vector;

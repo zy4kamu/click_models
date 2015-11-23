@@ -68,6 +68,8 @@ struct Result
     Result(): corect_pairs(0), right_answers(0), wrong_answers(0) {}
 };
 
+bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
+
 //probability to buy something sum(sim(u,u_i)*f) 
 class collaborative_filtering
 {
@@ -103,7 +105,7 @@ public:
     void Learn_by_several_daya(const std::string& pathToData, int start_learning_day, int end_learning_day, bool print);
     std::unordered_set<int> Test(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day, const std::string& pathToData);
 
-    bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
+    //bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
     bool GetFilterForTest(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
 
     void Test2(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day,

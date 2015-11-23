@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-namespace collaborative_filtering
+namespace collaborativefiltering
 {
 
 Embedding::Embedding(size_t dimension)

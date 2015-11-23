@@ -12,8 +12,8 @@
 using std::string;
 using std::unordered_set;
 
-using collaborative_filtering::CollaborativeFiltering;
-using collaborative_filtering::Learner;
+using collaborativefiltering::CollaborativeFiltering;
+using collaborativefiltering::Learner;
 
 void getUserDocQueries()
 {

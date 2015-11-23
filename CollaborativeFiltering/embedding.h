@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <string>
 
-namespace collaborative_filtering
+namespace collaborativefiltering
 {
 
 using std::vector;

@@ -5,7 +5,7 @@
 #include "FileReader.h"
 #include "FileWriter.h"
 
-namespace collaborative_filtering
+namespace collaborativefiltering
 {
 
 CollaborativeFiltering::CollaborativeFiltering(size_t dimension)
