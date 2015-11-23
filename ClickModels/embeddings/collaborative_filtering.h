@@ -3,7 +3,7 @@
 
 #include<vector>
 #include<map>
-#include<numeric>
+//#include<numeric>
 #include<random>
 #include<math.h>
 #include <thread>
@@ -12,11 +12,13 @@
 #include "../uumap.h"
 #include "../day_data.h"
 #include "../counters.h"
+#include "filters.h"
 #include "Embedding.h"
 #include <mutex>
 
 
 void Get_documents();
+void Get_query();
 
 class Similarity_function
 {
@@ -32,9 +34,10 @@ public:
 class Example
 {
 public:
+    int user_id;
     std::vector<double>& user;
     size_t rang_click_document;
-    Example(std::vector<double>& u, size_t r): user(u), rang_click_document(r) {}
+    Example(std::vector<double>& u, size_t r, int u_id = 0): user(u), rang_click_document(r), user_id(u_id) {}
 };
 
 struct VectorWithLoc
@@ -59,14 +62,7 @@ struct ResultForOneEx
     ResultForOneEx(double fd, int t) : first_dist(fd), truth(t) {}
 };
 
-struct Result
-{
-    size_t corect_pairs;
-    size_t right_answers;
-    size_t wrong_answers;
-    std::vector<ResultForOneEx> distToAnswers;
-    Result(): corect_pairs(0), right_answers(0), wrong_answers(0) {}
-};
+
 
 //probability to buy something sum(sim(u,u_i)*f) 
 class collaborative_filtering
@@ -75,18 +71,23 @@ private:
 
     int dim;
 
-    std::unordered_map<size_t, std::vector<double>> document_embedding;
+    //std::unordered_map<size_t, std::vector<double>> document_embedding;
+    std::unordered_map<size_t, std::vector<double>> query_embedding;
+    std::unordered_map<size_t, std::vector<double>> user_query_embedding;
     std::ofstream res_file;
     Similarity_function f;
 
     int min_number;
     int max_number;
 private:
-    std::vector<double> res_one_position(const std::vector<Example>& examples, const std::vector<double>& user) const;
+    double user_user_query_similarity(int user1, int user2, int query);
+    std::vector<double> res_one_position(const std::vector<Example>& examples, const std::vector<double>& user,
+                                                                  int user_id, int query);
+    std::vector<double> res_one_position(const std::vector<Example>& examples, const std::vector<double>& user);
 public:
     std::unordered_map<size_t, std::vector<double>> embedding;
 public:
-    collaborative_filtering(double rate_, int dim_, const string& usersFile, const string& documentsFile, const std::string& result_file, int min_n, int max_n);
+    collaborative_filtering(double rate_, int dim_, const string& usersFile, const string& queryFile, const std::string& result_file, int min_n, int max_n);
     void LearnOneEx(const Query& history, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank);
     void LearnOneEx1(const std::vector<Query>& dayDataVec, const uumap& queryUser, const uumap& userUrl, const uumap& queryRank,
                                              size_t coreIndex, size_t numCores);
@@ -95,16 +96,17 @@ public:
     void Learn(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const DayData& dayData);
     void One_step(const std::vector<Example>& examples,
                                            const std::vector<bool>& truth,
-                                           std::vector<double>& user, bool change_user);
-    void One_step1( const std::vector<std::vector<Example>>& examples,
-                                            const std::vector<std::vector<bool>>& truth,
-                                            const std::vector<size_t>& users,
-                                            size_t coreIndex, size_t numCores, bool change_user);
+                                           std::vector<double>& user);
+    void One_step(const std::vector<Example>& examples,
+                                           const std::vector<bool>& truth,
+                                           std::vector<double>& user,
+                                           int user_id,
+                                           int query);
     void Learn_by_several_daya(const std::string& pathToData, int start_learning_day, int end_learning_day, bool print);
     std::unordered_set<int> Test(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day, const std::string& pathToData);
 
-    bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
-    bool GetFilterForTest(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
+    //bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
+    //bool GetFilterForTest(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
 
     void Test2(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, int test_day,
                                        const std::string& pathToData, const std::unordered_set<int>& examples);
