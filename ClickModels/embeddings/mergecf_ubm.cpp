@@ -1,4 +1,5 @@
-#include"mergecf_ubm.h"
+#include "mergecf_ubm.h"
+#include <algorithm>
 
 R::R(const std::string& data_file)
 {
