@@ -1,6 +1,6 @@
 #include "collaborative_filtering.h"
 #include "macro_parameters.h"
-#include "IOptimizable.h"
+#include "embeddings/pairwaislearning.h"
 
 namespace collaborativefiltering
 {
@@ -15,7 +15,9 @@ public:
     void learn();
 
 
-    void makeOneStep__();
+    void UpgradeOneExample(const Query& serp, bool change_document, bool change_user, bool change_query);
+
+    void makeOneStep__(int step);
     void makePositiveUpdate__(size_t query, size_t user, size_t doc, size_t rank);
     void makeNegativeUpdate__(size_t query, size_t user, size_t doc, size_t rank);
 private:
@@ -24,6 +26,8 @@ private:
 //    void makeNegativeUpdate(size_t query, size_t user, size_t doc, size_t rank);
 //    CollaborativeFiltering gradient;
     CollaborativeFiltering model;
+private:
+    pairwaisLearning ranker;
 };
 
 }

@@ -6,7 +6,7 @@
 static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
 //static string out_directory = "/home/stepan/click_models_data/";
 
-size_t numThreads = 1;
+size_t numThreads = 4;
 size_t numThreads_learning = 4;
 vector<double> ScalarProduct(const std::vector<double>& x, const std::vector<double>& y)
 {
@@ -72,7 +72,7 @@ vector<double> divSimilarity(const std::vector<double>& x,const std::vector<doub
 void Get_documents()
 {
     std::unordered_set<size_t> documents;
-    for (int i = 1; i < 28; ++i)
+    for (int i = 1; i < 4; ++i)
     {
        DayData day = read_day(out_directory +"data_by_days/" +std::to_string(i) + ".txt");
        for(const auto& item0 : day)
@@ -88,7 +88,7 @@ void Get_documents()
        }
 
     }
-    std::ofstream d(out_directory + "documents");
+    std::ofstream d(out_directory + "initial_model_parameters_3/documents");
     for (auto it = documents.begin(); it != documents.end(); ++it)
     {
         d << *(it) << "\n";
@@ -99,7 +99,7 @@ void Get_documents()
 void Get_query()
 {
     std::unordered_set<size_t> queries;
-    for (int i = 1; i < 28; ++i)
+    for (int i = 1; i < 4; ++i)
     {
        DayData day = read_day(out_directory +"data_by_days/" +std::to_string(i) + ".txt");
        for(const auto& item0 : day)
@@ -115,8 +115,35 @@ void Get_query()
        }
 
     }
-    std::ofstream d(out_directory + "queries");
+    std::ofstream d(out_directory + "initial_model_parameters_3/queries");
     for (auto it = queries.begin(); it != queries.end(); ++it)
+    {
+        d << *(it) << "\n";
+    }
+    d.close();
+}
+
+void Get_users()
+{
+    std::unordered_set<size_t>users;
+    for (int i = 1; i < 4; ++i)
+    {
+       DayData day = read_day(out_directory +"data_by_days/" +std::to_string(i) + ".txt");
+       for(const auto& item0 : day)
+       {
+           for (const auto& item1 : item0.second)
+           {
+               auto history = item1.second;
+               for (int j = 0; j < 10; ++j)
+               {
+                   users.insert(history.person);
+               }
+           }
+       }
+
+    }
+    std::ofstream d(out_directory + "initial_model_parameters_3/users");
+    for (auto it = users.begin(); it != users.end(); ++it)
     {
         d << *(it) << "\n";
     }
@@ -320,7 +347,7 @@ std::vector<double> GetCoeffs(const std::vector<double>& position_distribution,
     for (int rang = 0; rang < 10; ++rang)
     {
         int rang_truth = truth[rang];
-        for (int rang1 = 0; rang1 < 10; ++rang1)
+        for (int rang1 = rang+1; rang1 < 10; ++rang1)
         {
             int rang1_truth = truth[rang1];
             if (rang_truth != rang1_truth)
@@ -557,24 +584,24 @@ void collaborative_filtering::Learn(const uumap& queryUser, const uumap& userUrl
 void collaborative_filtering::Learn_by_several_daya(const std::string& pathToData, int start_learning_day, int end_learning_day, bool print)
 {
      Counters counters;
-    for (int i = 1; i < start_learning_day; ++i)
-    {
-        DayData dayData = read_day(pathToData +"data_by_days/" +std::to_string(i) + ".txt");
-        std::cout << "End reading " << i <<  "day\n";
-        calculate_counters(dayData, counters);
-    }
+//    for (int i = 1; i < start_learning_day; ++i)
+//    {
+//        DayData dayData = read_day(pathToData +"data_by_days/" +std::to_string(i) + ".txt");
+//        std::cout << "End reading " << i <<  "day\n";
+//        calculate_counters(dayData, counters);
+//    }
 
-//    clock_t start = clock();
-//    uumap queryUser(pathToData + "query_user_1_25");
-//    uumap userUrl(pathToData + "user_url_1_25");
-//    uumap queryRank(pathToData + "query_rank_1_25");
-//    counters.Set_user_url(userUrl);
-//    userUrl.clear();
-//    counters.Set_query_user(queryUser);
-//    queryUser.clear();
-//    counters.Set_query_rank(queryRank);
-//    queryRank.clear();
-//    std::cout << "have read counters for " << double(clock() - start) / CLOCKS_PER_SEC << " seconds ..." << std::endl;
+    clock_t start = clock();
+    uumap queryUser(pathToData + "query_user_1_25");
+    uumap userUrl(pathToData + "user_url_1_25");
+    uumap queryRank(pathToData + "query_rank_1_25");
+    counters.Set_user_url(userUrl);
+    userUrl.clear();
+    counters.Set_query_user(queryUser);
+    queryUser.clear();
+    counters.Set_query_rank(queryRank);
+    queryRank.clear();
+    std::cout << "have read counters for " << double(clock() - start) / CLOCKS_PER_SEC << " seconds ..." << std::endl;
 
     std::cout << "Run_Learning\n";
     std::unordered_set<int> filter;
@@ -583,7 +610,7 @@ void collaborative_filtering::Learn_by_several_daya(const std::string& pathToDat
          DayData dayData = read_day(pathToData + "data_by_days/"+ std::to_string(i) + ".txt");
          for (int j = 0; j <  1; ++j)
          {
-            Learn(counters.query_user, counters.user_url, counters.query_rank, dayData);
+         //   Learn(counters.query_user, counters.user_url, counters.query_rank, dayData);
          }
          calculate_counters(dayData, counters);
          //dayData.clear();
@@ -726,32 +753,32 @@ void collaborative_filtering::TestOneEx(const uumap& queryUser, const uumap& use
     vector<double> evristic(a);
     vector<double> my_evristic(a);
     double sumUsersSimilarity = 0;
-    for (auto j = users_map.begin(); j != users_map.end(); ++j)
-    {
-        size_t nearestUser = j->first;
-        const unordered_map<size_t, vector<double> >& nearestUserUrls = userUrl.watch(nearestUser);
-        clickedBestRank = -1;
-        for (size_t i = 0; i < 10; ++i)
-        {
-            size_t url = history.urls[i];
-            auto found = nearestUserUrls.find(url);
-            if (found != nearestUserUrls.end() && found->second.size() > 0)
-            {
+//    for (auto j = users_map.begin(); j != users_map.end(); ++j)
+//    {
+//        size_t nearestUser = j->first;
+//        const unordered_map<size_t, vector<double> >& nearestUserUrls = userUrl.watch(nearestUser);
+//        clickedBestRank = -1;
+//        for (size_t i = 0; i < 10; ++i)
+//        {
+//            size_t url = history.urls[i];
+//            auto found = nearestUserUrls.find(url);
+//            if (found != nearestUserUrls.end() && found->second.size() > 0)
+//            {
 
-                //evristic[i] +=  1;
-                //my_evristic[i] += similarity(embedding[user], embedding[nearestUser]);
-                clickedBestRank = i;
-                break;
-            }
-        }
-        if (clickedBestRank >= 0)
-        {
+//                //evristic[i] +=  1;
+//                //my_evristic[i] += similarity(embedding[user], embedding[nearestUser]);
+//                clickedBestRank = i;
+//                break;
+//            }
+//        }
+//        if (clickedBestRank >= 0)
+//        {
 
-             evristic[clickedBestRank] +=  1;
-             my_evristic[clickedBestRank] += similarity(embedding[user], embedding[nearestUser]);
+//             evristic[clickedBestRank] +=  1;
+//             my_evristic[clickedBestRank] += similarity(embedding[user], embedding[nearestUser]);
 //                     user_user_query_similarity(user, nearestUser, query);
-        }
-    }
+//        }
+//    }
     double del = 1;
 //    for(int i = 0; i < 10; ++i)
 //    {
@@ -769,7 +796,15 @@ void collaborative_filtering::TestOneEx(const uumap& queryUser, const uumap& use
     {
         ranker_[i] = 10-i;
     }
-
+    for (size_t i = 0; i < 10; ++i)
+    {
+         const vector<double>& found = userUrl.watch(user, history.urls[i]);
+         if (found.size() > 0 && found[0] > 1 - 1e-5)
+         {
+             evristic[i] += 1;
+             break;
+         }
+    }
 
     double sum_evristic = 0;
     double sum_ctr = 0;
@@ -786,44 +821,44 @@ void collaborative_filtering::TestOneEx(const uumap& queryUser, const uumap& use
         GetResult(history, evristic, ev, false);
         GetResult(history, ranker_, ranker, false);
         GetResult(history, my_evristic, my, false);
-        for (int j = 0; j < 10; ++j)
-        {
-            res_file << query_ctr[j] / sum_ctr << " ";
-        }
-        for (int j = 0; j < 10; ++j)
-        {
-            res_file << query_embedding[query][j] / (query_embedding[query][10] + 1e-10) << " ";
-        }
-        for (int j = 0; j < 10; ++j)
-        {
-            res_file << evristic[j] / sum_evristic << " ";
-        }
-        res_file << queryUser.watch(query).size() << " ";
-        for (int j = 0; j < 10; ++j)
-        {
-            res_file << my_evristic[j] / sum_my_evristic << " ";
-        }
-        for (size_t i = 0; i < 10; ++i)
-        {
-            if(history.type[i] == 2)
-            {
-                res_file << "1 ";
-            }
-            else
-            {
-                res_file << "0 ";
-            }
-        }
-        int t = 1;
-        for (size_t i = 0; i < 3; ++i)
-        {
-            if(history.type[i] == 2)
-            {
-                t = 0;
-            }
-        }
+//        for (int j = 0; j < 10; ++j)
+//        {
+//            res_file << query_ctr[j] / sum_ctr << " ";
+//        }
+//        for (int j = 0; j < 10; ++j)
+//        {
+//            res_file << query_embedding[query][j] / (query_embedding[query][10] + 1e-10) << " ";
+//        }
+//        for (int j = 0; j < 10; ++j)
+//        {
+//            res_file << evristic[j] / sum_evristic << " ";
+//        }
+//        res_file << queryUser.watch(query).size() << " ";
+//        for (int j = 0; j < 10; ++j)
+//        {
+//            res_file << my_evristic[j] / sum_my_evristic << " ";
+//        }
+//        for (size_t i = 0; i < 10; ++i)
+//        {
+//            if(history.type[i] == 2)
+//            {
+//                res_file << "1 ";
+//            }
+//            else
+//            {
+//                res_file << "0 ";
+//            }
+//        }
+//        int t = 1;
+//        for (size_t i = 0; i < 3; ++i)
+//        {
+//            if(history.type[i] == 2)
+//            {
+//                t = 0;
+//            }
+//        }
 
-        res_file << t << "\n";
+//        res_file << t << "\n";
 
     }
 
@@ -841,7 +876,7 @@ void collaborative_filtering::TestOneEx1(const uumap& queryUser, const uumap& us
     for (size_t i = coreIndex; i < dayDataVec.size(); i += numCores)
     {
        //if (i % 1000 == 0) std::cout << i << std::endl;
-       if (GetFilterForTest(queryUser, userUrl, queryRank, dayDataVec[i], min_number, max_number))
+       if (GetFilterForTest(queryUser, userUrl, queryRank, dayDataVec[i]))
        {
            examples.insert(i);
            TestOneEx(queryUser, userUrl, queryRank, dayDataVec[i], ranker, ev, my);

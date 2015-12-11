@@ -5,6 +5,9 @@
 
 #include "embedding.h"
 #include "day_data.h"
+#include "embeddings/our_similarity.h"
+#include "embeddings/collaborative_filtering.h"
+
 
 namespace collaborativefiltering
 {
@@ -25,13 +28,15 @@ public:
 
     void write(const string& folder);
 
-    vector<size_t> sort(const Query& serp);
+    vector<size_t> sort(const Query& serp, const Counters& counts1);
 
     double calculateLogLikelihood(const Query& serp);
 
     void clear();
 
     void setParameters(const vector<double>& params);
+    vector<double> calculateClickProbabilities(const Query& serp);
+    vector<double> calculateClickProbabilitiesMy(const Query& serp, const Counters& counters);
 
     Embedding userEmbedding;
     Embedding queryEmbedding;
@@ -41,7 +46,7 @@ public:
 private:
     double estimateAttractiveness(size_t user, size_t query, size_t doc);
 
-    vector<double> calculateClickProbabilities(const Query& serp);
+
 
     void readExaminations(const string& folder);
 

@@ -17,7 +17,7 @@ R::R(const std::string& data_file)
         in >> d;
     }
     in.close();
-    parameters.resize(7);
+    parameters.resize(1);
     for (int i = 0; i < parameters.size(); ++i)
     {
         parameters[i] = 0.5;
@@ -31,13 +31,14 @@ std::vector<std::vector<double>> R::Get_features_by_rank(const std::vector<doubl
     truth.clear();
     for (int i = 0; i < 10; ++i)
     {
-        res[i].push_back(features[i]);
-        res[i].push_back(features[10 + i]);
-        res[i].push_back(features[20 + i]);
+//        res[i].push_back(features[i]);
+//        res[i].push_back(features[10 + i]);
+//        res[i].push_back(features[31 + i]);
+//        res[i].push_back(features[31 + i] * features[10 + i] * features[i]);
+//        res[i].push_back(features[31 + i] * features[10 + i]);
+//        res[i].push_back(features[31 + i] * features[i]);
+//        res[i].push_back(features[10 + i] * features[i]);
         res[i].push_back(features[20 + i] * features[10 + i] * features[i]);
-        res[i].push_back(features[20 + i] * features[10 + i]);
-        res[i].push_back(features[20 + i] * features[i]);
-        res[i].push_back(features[10 + i] * features[i]);
     }
 //    for (int i = 31; i < 41; ++i)
 //    {
@@ -46,7 +47,7 @@ std::vector<std::vector<double>> R::Get_features_by_rank(const std::vector<doubl
 //    }
     for (int i = 41; i < 51; ++i)
     {
-        truth.push_back(bool(features[i]));
+        truth.push_back(features[i] > 0.5);
     }
     return res;
 
@@ -88,15 +89,12 @@ void R::One_step(const std::vector<double>& feature)
         {
            parameters[i] += rate * features_by_rank[rank][i] * coeffs[rank];
         }
-        parameters[i] += rate * 2 * old_param;
-        //std::cout << old_param << " " << parameters[i] << std::endl;
     }
 
 }
 
 void R::Learn(const std::string& train_data, const std::string& test_data)
 {
-    std::vector<double> last_param(parameters);
     for (int i = 0; i < features.size(); ++i)
     {
         if (i%100000 == 0) std::cout << i << std::endl;
@@ -118,9 +116,14 @@ void R::GetResult(const std::vector<bool>& truth, const std::vector<double>& evr
     {
         res[i] = std::pair<double, int> (evristic[i], i);
     }
-    std::sort(res.begin(), res.end(), [](std::pair<double, int> a, std::pair<double, int> b)
+    std::sort(res.begin(), res.end(), [](std::pair<double, int> a, std::pair<double, int> b)->bool
                                                     {
-                                                      return a.first > b.first;
+                                                    if (std::abs(a.first -  b.first) < 1e-10)
+                                                        return a.second > b.second;
+                                                      if (a.first > b.first)
+                                                          return true;
+
+                                                      return false;
                                                     });
     if (truth[res[0].second])
     {
@@ -158,6 +161,8 @@ void R::Test(const std::string& data_file)
                 Get_features_by_rank(feature, truth);
         std::vector<double> scores = Get_scores(features_by_rank);
         GetResult(truth, scores, res);
+
+
     }
     in.close();
     std::cout << res.right_answers << " " << res.right_answers2 << " "

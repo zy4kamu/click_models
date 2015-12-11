@@ -19,6 +19,7 @@
 
 void Get_documents();
 void Get_query();
+void Get_users();
 
 class Similarity_function
 {

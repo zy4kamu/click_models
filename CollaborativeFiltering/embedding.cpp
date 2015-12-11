@@ -83,13 +83,20 @@ void Embedding::initialize(const vector<size_t>& items, size_t dimension)
         for (size_t j = 0; j < dimension; ++j)
         {
             double rand = distribution(device);
-            embedding[start + j] = rand;
+            if (j == 0)
+            {
+                embedding[start + j] = 1.;//rand;
+            }
+            else
+            {
+                embedding[start + j] = rand;
+            }
             sum += rand;
         }
-        for (size_t j = 0; j < dimension; ++j)
-        {
-            embedding[start + j] /= sum;
-        }
+//        for (size_t j = 1; j < dimension; ++j)
+//        {
+//            embedding[start + j] /= sum;
+//        }
         std::cout << "\r";
     }
     std::cout << std::endl;

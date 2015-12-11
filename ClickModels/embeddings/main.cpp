@@ -8,6 +8,7 @@
 #include "Embedding.h"
 #include "collaborative_filtering.h"
 #include "mergecf_ubm.h"
+#include "newmodel.h"
 //#include "ubm.h"
 #include <ctime>
 #include <ctime>
@@ -20,6 +21,8 @@ static string out_directory = "/Users/annasepliaraskaia/Desktop/work/";
 
 int main()
 {
+
+
       //UBM ubm(out_directory, 1, 8);
       //ubm.LearnEM();
       //ubm.MyLearn();
@@ -28,18 +31,20 @@ int main()
 //      for (int i = 0; i < 1; ++i)
 //      {
 //            cf.rate /= std::sqrt(i+1);
-//            cf.Learn_by_several_daya(out_directory, 1, 25, true);
+//            cf.Learn_by_several_daya(out_directory, 26, 27, true);
 //            cf.rate *= std::sqrt(i+1);
 //      }
-    R r(out_directory + "data_stat/histogramms/resul_train");
-    r.rate = -1;
-    for (int i = 0; i < 10; ++i)
-    {
-        std::cout << "ITERATION " << i << std::endl;
-        r.rate /= std::sqrt(i+1);
-        std::cout << "Run Learn\n";
-        r.Learn(out_directory + "data_stat/histogramms/resul_train", out_directory + "data_stat/histogramms/result_train");
-        r.rate *= std::sqrt(i+1);
-    }
+//    R r(out_directory + "data_stat/histogramms/resul_train");
+//    r.rate = -1;
+//    for (int i = 0; i < 10; ++i)
+//    {
+//        std::cout << "ITERATION " << i << std::endl;
+//        r.rate /= std::sqrt(i+1);
+//        std::cout << "Run Learn\n";
+//        r.Learn(out_directory + "data_stat/histogramms/resul_train", out_directory + "data_stat/histogramms/result_train");
+//        r.rate *= std::sqrt(i+1);
+//    }
+    NewModel n;
+    n.learn();
 
 }

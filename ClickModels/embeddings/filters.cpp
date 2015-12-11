@@ -35,7 +35,7 @@ bool  Filter2(const uumap& queryUser, const uumap& userUrl, const uumap& queryRa
 bool Filter3(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
 {
     size_t query = history.id;
-    if (queryUser.watch(query).size() <  2) return false;
+    if (queryUser.watch(query).size() <  10) return false;
     return true;
 }
 
@@ -80,7 +80,7 @@ bool Filter5(const uumap& queryUser, const uumap& userUrl, const uumap& queryRan
 bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
 {
     typedef bool(*filter) (const uumap&, const uumap&, const uumap&, const Query&);
-    vector<filter> filters = {Filter1, Filter2, Filter3, Filter4, Filter5};
+    vector<filter> filters = {Filter3, Filter4};
     for (size_t i = 0; i < filters.size(); ++i)
     {
         if (!filters[i](queryUser, userUrl, queryRank, history)) return false;
@@ -88,14 +88,14 @@ bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryR
     return true;
 }
 
-bool GetFilterForTest(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history, int min_number, int max_number)
+bool GetFilterForTest(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
 {
     typedef bool(*filter) (const uumap&, const uumap&, const uumap&, const Query&);
-    vector<filter> filters = {Filter1, Filter2, Filter4};
+    vector<filter> filters = {Filter3, Filter4};
     for (size_t i = 0; i < filters.size(); ++i)
     {
         if (!filters[i](queryUser, userUrl, queryRank, history)) return false;
     }
-    if (!Filter3Mine(queryUser, userUrl, queryRank, history, min_number, max_number)) return false;
+    //if (!Filter3Mine(queryUser, userUrl, queryRank, history, 0, 5)) return false;
     return true;
 }

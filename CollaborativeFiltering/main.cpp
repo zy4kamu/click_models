@@ -55,7 +55,7 @@ void prepareCollaborativeFiltering()
     std::cout << "reading queries ..." << std::endl;
     FileManager::Read(INPUT_FOLDER + "queries", &queries);
     std::cout << "reading docs ..." << std::endl;
-    FileManager::Read(INPUT_FOLDER + "docs", &docs);
+    FileManager::Read(INPUT_FOLDER + "documents", &docs);
     std::cout << "initializing ..." << std::endl;
     processor.initialize(users, queries, docs, DIMENSION);
     std::cout << "writing to file ..." << std::endl;

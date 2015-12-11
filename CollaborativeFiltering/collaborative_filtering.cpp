@@ -4,6 +4,7 @@
 #include "macro_parameters.h"
 #include "FileReader.h"
 #include "FileWriter.h"
+#include "embeddings/our_similarity.h"
 
 namespace collaborativefiltering
 {
@@ -108,7 +109,7 @@ void CollaborativeFiltering::write(const string& folder)
 {
     this->userEmbedding.write(folder + "users");
     this->queryEmbedding.write(folder + "queries");
-    this->docEmbedding.write(folder + "docs");
+    this->docEmbedding.write(folder + "documents");
     vector<double> ex(this->examinations, this->examinations + SERP_SIZE);
     FileManager::Write(folder + "examinations", ex);
 }
@@ -147,9 +148,130 @@ vector<double> CollaborativeFiltering::calculateClickProbabilities(const Query& 
     return probs;
 }
 
-vector<size_t> CollaborativeFiltering::sort(const Query& serp)
+vector<double> CollaborativeFiltering::calculateClickProbabilitiesMy(const Query& serp,
+                                                        const Counters& counters)
 {
-    vector<double> probs = this->calculateClickProbabilities(serp);
+    size_t size = serp.urls.size();
+    int query = serp.id;
+    int user = serp.person;
+    double* q = this->queryEmbedding.get(query);
+    double* u = this->userEmbedding.get(user);
+//    const unordered_map<size_t, vector<double> >& users_map = counters.query_user.watch(query);
+
+
+//    unordered_set<size_t> users;
+//    for (auto& item : users_map)
+//    {
+//        users.insert(item.first);
+//    }
+
+//    int clickedBestRank = -1;
+    vector<double> a;
+    for (int i = 0; i < 10; ++i)
+    {
+        a.push_back(1e-10*(10.-i));
+    }
+    vector<double> evristic(10, 0);
+//    for (auto j = users_map.begin(); j != users_map.end(); ++j)
+//    {
+//        size_t nearestUser = j->first;
+//        const unordered_map<size_t, vector<double> >& nearestUserUrls =
+//                counters.user_url.watch(nearestUser);
+//        clickedBestRank = -1;
+//        for (size_t i = 0; i < 10; ++i)
+//        {
+//            size_t url = serp.urls[i];
+//            auto found = nearestUserUrls.find(url);
+//            if (found != nearestUserUrls.end() && found->second.size() > 0)
+//            {
+
+//                evristic[i] +=  1;
+//            }
+//        }
+//    }
+//      for (int i = 0; i < 10; ++i)
+//      {
+//          const unordered_map<size_t, vector<double> >& vec1 = counters.query_url.watch(query);
+//          auto vec2 = vec1.find(serp.urls[i]);
+//          if (vec2 != vec1.end() && vec2->second.size() > 0)
+//          {
+//            evristic[i] = vec2->second[1];
+//            //std::cout << vec2->second[1] << " " << vec2->second[2] << " " << serp.type[i] <<"\n";
+//          }
+//      }
+//      int del;
+//      std::cin >> del;
+//    if (std::abs(q[0] - 1) < 1e-10)
+//    {
+//        for (int i = 1; i < DIMENSION; ++i)
+//        {
+//            q[i] = 1.;
+//        }
+//    }
+//    if (std::abs(u[0] - 1) < 1e-10)
+//    {
+//        int j = rand() % (DIMENSION-1);
+//        j += 1;
+//        for (int i = 0; i < DIMENSION; ++i)
+//        {
+//            if (i == 0)
+//            {
+//                u[i] = 0.5;
+//            }
+//            else if (i == j)
+//            {
+//                u[i] = 1;
+//            }
+//            else
+//            {
+//                u[i] = 0;
+//            }
+//        }
+//    }
+    //Cos::normalize(u+1, DIMENSION - 1);
+//    std::vector<double> u_(u+1,u + dimension);
+
+    vector<double> probs(size);
+    for (size_t i = 0; i < size; ++i)
+    {
+        double* d = this->docEmbedding.get(serp.urls[i]);
+        int j = rand() % (DIMENSION-1);
+        j += 1;
+        if (std::abs(d[0] - 1) < 1e-10)
+        {
+            for (int k = 0; k < DIMENSION; ++k)
+            {
+                if (k == 0)
+                {
+                    d[k] = 0.5;
+                }
+                else if (k == j)
+                {
+                    d[k] = 0;
+                }
+                else
+                {
+                    d[k] = 0;
+                }
+            }
+        }
+        std::vector<double> d_(d+1, d+dimension);
+        double attr = 1;
+        double attractiveness = Examination::Value(d[0]);
+        const vector<double>& found = counters.user_url.watch(user, serp.urls[i]);
+        if (found.size() > 0 && found[0] > 1 - 1e-5)
+        {
+            evristic[i] = 1;
+        }
+        probs[i] = evristic[i];//(Examination::Value(q[i]) * attractiveness);
+    }
+    return probs;
+}
+
+vector<size_t> CollaborativeFiltering::sort(const Query& serp,
+                                            const Counters& counts1)
+{
+    vector<double> probs = this->calculateClickProbabilitiesMy(serp, counts1);
     vector<size_t> indecies(probs.size());
     for (size_t i = 0; i < probs.size(); ++i) indecies[i] = i;
     std::sort(indecies.begin(), indecies.end(),
