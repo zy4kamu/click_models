@@ -1,41 +1,41 @@
 #include "our_similarity.h"
 #include <cmath>
 
-//namespace our_similarity
-//{
-//double similarity(const std::vector<double>& x,const std::vector<double>& y)
-//{
-//    double res = 0;
-//    bool cout_ = false;
-//    for (size_t i = 0; i < x.size(); ++i)
-//    {
-//        res += (x[i] - y[i]) * (x[i] - y[i]);
-//        if (x[i] != x[i]) cout_ = true;
-//        if (y[i] != y[i]) cout_ = true;
-//    }
-//    return exp(-sqrt(res));
+namespace our_similarity
+{
+double similarity(const std::vector<double>& x,const std::vector<double>& y)
+{
+    double res = 0;
+    bool cout_ = false;
+    for (size_t i = 0; i < x.size(); ++i)
+    {
+        res += (x[i] - y[i]) * (x[i] - y[i]);
+        if (x[i] != x[i]) cout_ = true;
+        if (y[i] != y[i]) cout_ = true;
+    }
+    return exp(-sqrt(res));
 
-//}
+}
 
-//std::vector<double> divSimilarity(const std::vector<double>& x,const std::vector<double>& y)
-//{
-//    double coef = 0;
-//    for (size_t i = 0; i < x.size(); ++i)
-//    {
-//        coef += (x[i] - y[i]) * (x[i] - y[i]);
-//    }
-//    coef = sqrt(coef);
-//    coef = exp(-coef) * (-1./coef);
-//    std::vector<double> res_v(x.size(), 0.);
-//    for (size_t i = 0; i < x.size(); ++i)
-//    {
-//        res_v[i] = (x[i] - y[i]) * coef;
+std::vector<double> divSimilarity(const std::vector<double>& x,const std::vector<double>& y)
+{
+    double coef = 0;
+    for (size_t i = 0; i < x.size(); ++i)
+    {
+        coef += (x[i] - y[i]) * (x[i] - y[i]);
+    }
+    coef = sqrt(coef);
+    coef = exp(-coef) * (-1./coef);
+    std::vector<double> res_v(x.size(), 0.);
+    for (size_t i = 0; i < x.size(); ++i)
+    {
+        res_v[i] = (x[i] - y[i]) * coef;
 
-//    }
-//    return res_v;
-//}
+    }
+    return res_v;
+}
 
-//}
+}
 
 namespace Examination
 {

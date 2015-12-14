@@ -44,7 +44,7 @@ int main()
 //        r.Learn(out_directory + "data_stat/histogramms/resul_train", out_directory + "data_stat/histogramms/result_train");
 //        r.rate *= std::sqrt(i+1);
 //    }
-    NewModel n;
+    Learner_new_model n;
     n.learn();
 
 }

@@ -34,7 +34,7 @@ std::vector<double> pairwaisLearning::Get_Coeffs(const std::vector<double>& scor
             if (rang_truth != rang1_truth)
             {
                 double d_cost = DivCost(scores[rang] , scores[rang1]);
-                //d_cost *= (rang_DCG - rang1_DCG) * 10;
+                //d_cost *= (rang_DCG - rang1_DCG) * 2;
                 if (rang_truth > rang1_truth)
                 {
                     coeffs[rang] += d_cost;

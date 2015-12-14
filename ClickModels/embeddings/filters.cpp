@@ -80,7 +80,7 @@ bool Filter5(const uumap& queryUser, const uumap& userUrl, const uumap& queryRan
 bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
 {
     typedef bool(*filter) (const uumap&, const uumap&, const uumap&, const Query&);
-    vector<filter> filters = {Filter3, Filter4};
+    vector<filter> filters = {Filter4};
     for (size_t i = 0; i < filters.size(); ++i)
     {
         if (!filters[i](queryUser, userUrl, queryRank, history)) return false;
@@ -91,7 +91,7 @@ bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryR
 bool GetFilterForTest(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
 {
     typedef bool(*filter) (const uumap&, const uumap&, const uumap&, const Query&);
-    vector<filter> filters = {Filter3, Filter4};
+    vector<filter> filters = {};
     for (size_t i = 0; i < filters.size(); ++i)
     {
         if (!filters[i](queryUser, userUrl, queryRank, history)) return false;

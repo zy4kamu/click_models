@@ -405,14 +405,6 @@ void Learner::UpgradeOneExample(const Query& serp, bool change_document, bool ch
         truth[rank] = serp.type[rank] == 2;
     }
     std::vector<double> scores = model.calculateClickProbabilitiesMy(serp, counters);
-    for (int i = 0; i < 10; ++i)
-    {
-        const vector<double>& found = counters.user_url.watch(user, serp.urls[i]);
-        if (found.size() > 0 && found[0] > 1 - 1e-5)
-        {
-            scores[i] /= 10;
-        }
-    }
     //int type_before = serp.type[this->model.sort(serp)[0]] == 2 ? 1 : 0;
 
     std::vector<double> coeffs = ranker.Get_Coeffs(scores, truth);

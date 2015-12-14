@@ -3,12 +3,12 @@
 
 #include <vector>
 #include <math.h>
-//namespace our_similarity
-//{
-//double similarity(const std::vector<double>& x,const std::vector<double>& y);
-//std::vector<double> divSimilarity(const std::vector<double>& x,const std::vector<double>& y);
+namespace our_similarity
+{
+double similarity(const std::vector<double>& x,const std::vector<double>& y);
+std::vector<double> divSimilarity(const std::vector<double>& x,const std::vector<double>& y);
 
-//}
+}
 namespace Similarity
 {
     double similarity(const std::vector<double>& x,const std::vector<double>& y);
