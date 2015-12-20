@@ -3,12 +3,14 @@
 
 #include <vector>
 #include <math.h>
-namespace our_similarity
-{
-double similarity(const std::vector<double>& x,const std::vector<double>& y);
-std::vector<double> divSimilarity(const std::vector<double>& x,const std::vector<double>& y);
+//namespace our_similarity
+//{
+//double similarity(const std::vector<double>& x,const std::vector<double>& y,
+//                  double min_value, double max_value);
+//std::vector<double> divSimilarity(const std::vector<double>& x,const std::vector<double>& y,
+//                                  double min_value, double max_value);
 
-}
+//}
 namespace Similarity
 {
     double similarity(const std::vector<double>& x,const std::vector<double>& y);
@@ -20,6 +22,7 @@ namespace Cos
 double similarity(const std::vector<double>& x,const std::vector<double>& y);
 std::vector<double> divSimilarity(const std::vector<double>& x,const std::vector<double>& y);
 void normalize(double* d, int dim);
+void normalize(std::vector<double>& d);
 void sum(double* ar, double* ar1, int dim, double rate);
 }
 

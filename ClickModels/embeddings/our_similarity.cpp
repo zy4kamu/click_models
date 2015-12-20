@@ -3,7 +3,8 @@
 
 namespace our_similarity
 {
-double similarity(const std::vector<double>& x,const std::vector<double>& y)
+double similarity(const std::vector<double>& x,const std::vector<double>& y,
+                  double min_value, double max_value)
 {
     double res = 0;
     bool cout_ = false;
@@ -13,11 +14,15 @@ double similarity(const std::vector<double>& x,const std::vector<double>& y)
         if (x[i] != x[i]) cout_ = true;
         if (y[i] != y[i]) cout_ = true;
     }
-    return exp(-sqrt(res));
+    res = exp(-sqrt(res));
+    double a = min_value / (max_value - min_value);
+    double b = 1./ (max_value - min_value);
+    return (res + a) / b;
 
 }
 
-std::vector<double> divSimilarity(const std::vector<double>& x,const std::vector<double>& y)
+std::vector<double> divSimilarity(const std::vector<double>& x,const std::vector<double>& y,
+                                  double min_value, double max_value)
 {
     double coef = 0;
     for (size_t i = 0; i < x.size(); ++i)
@@ -26,6 +31,8 @@ std::vector<double> divSimilarity(const std::vector<double>& x,const std::vector
     }
     coef = sqrt(coef);
     coef = exp(-coef) * (-1./coef);
+    coef /= (max_value - min_value);
+    //if (std::abs(coef) > 1) coef = coef / std::abs(coef);
     std::vector<double> res_v(x.size(), 0.);
     for (size_t i = 0; i < x.size(); ++i)
     {
@@ -85,11 +92,14 @@ double similarity(const std::vector<double>& x,const std::vector<double>& y)
     for (size_t i = 0; i < x.size(); ++i)
     {
         res += (x[i]) * (y[i]);
+        x_norm += x[i] * x[i];
+        y_norm += y[i] * y[i];
     }
-    if (std::abs(res) < 1e-10)
-    {
-        res = (res / (std::abs(res) + 1e-10)) + 1e-10;
-    }
+//    if (std::abs(res) < 1e-10)
+//    {
+//        res = (res / (std::abs(res) + 1e-10)) + 1e-10;
+//    }
+//    return res / sqrt(x_norm * y_norm);
     return res;
 
 }
@@ -116,6 +126,21 @@ void normalize(double* ar, int dim)
     for (size_t i = 0; i < dim;++i)
     {
         ar[i] /= sqrt(sum);
+    }
+}
+
+void normalize(std::vector<double>& d)
+{
+    double sum = 1e-10;
+    double min_value = d[0];
+    int dim = d.size();
+    for (size_t i = 0; i < dim;++i)
+    {
+        sum += d[i] * d[i];
+    }
+    for (size_t i = 0; i < dim;++i)
+    {
+        d[i] /= sqrt(sum);
     }
 }
 

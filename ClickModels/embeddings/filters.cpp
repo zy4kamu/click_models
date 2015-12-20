@@ -26,10 +26,10 @@ bool  Filter2(const uumap& queryUser, const uumap& userUrl, const uumap& queryRa
      const vector<double>& found = userUrl.watch(user, history.urls[i]);
      if (found.size() > 0 && found[0] > 1 - 1e-5)
      {
-         return false;
+         return true;
      }
     }
-    return true;
+    return false;
 }
 
 bool Filter3(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
@@ -80,7 +80,7 @@ bool Filter5(const uumap& queryUser, const uumap& userUrl, const uumap& queryRan
 bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
 {
     typedef bool(*filter) (const uumap&, const uumap&, const uumap&, const Query&);
-    vector<filter> filters = {Filter4};
+    vector<filter> filters = {Filter1, Filter3, Filter4, Filter2};
     for (size_t i = 0; i < filters.size(); ++i)
     {
         if (!filters[i](queryUser, userUrl, queryRank, history)) return false;
@@ -91,7 +91,7 @@ bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryR
 bool GetFilterForTest(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
 {
     typedef bool(*filter) (const uumap&, const uumap&, const uumap&, const Query&);
-    vector<filter> filters = {};
+    vector<filter> filters = {Filter1, Filter3, Filter4, Filter2};
     for (size_t i = 0; i < filters.size(); ++i)
     {
         if (!filters[i](queryUser, userUrl, queryRank, history)) return false;

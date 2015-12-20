@@ -3,6 +3,7 @@
 
 #include<unordered_map>
 #include <set>
+#include<random>
 #include "../day_data.h"
 #include "../counters.h"
 #include "our_similarity.h"
@@ -19,7 +20,7 @@ public:
 
 };
 
-class Data1
+class DataEmbedding
 {
 public:
     int dim;
@@ -36,15 +37,23 @@ static const string DAY_DATA_FOLDER = OUT_DIRECTORY + "data_by_days/";
 static const string INPUT_FOLDER = OUT_DIRECTORY + "initial_model_parameters_3/";
 static const string INITIAL_MODEL_PARAMETERS_FOLDER = OUT_DIRECTORY + "initial_model_parameters_3/";
 static const size_t DIMENSION = 101;
+static const size_t QUERYDIMENSION = 1000;
 static const size_t SERP_SIZE = 10;
 static const size_t FIRST_TRAINING_DAY = 1;
-static const size_t LAST_TRAINING_DAY = 20;
+static const size_t LAST_TRAINING_DAY = 1;
 static const double EPS = 1e-2;
-static double LEARNING_RATE = -1;
+static double LEARNING_RATE = -1.;
+static double LEARNING_RATE_EMBEDDING = -1;
 static const double MIN_EMBEDDING_VALUE = 0.1;
 static const double MAX_EMBEDDING_VALUE = 0.2;
 static const string PATH_TO_DATA = OUT_DIRECTORY;
 
+};
+
+namespace VectorUtils
+{
+    std::vector<double> GenerateRandomVector(int dim);
+    std::vector<double> GenerateZeroVector(int dim);
 };
 
 namespace Utils_metrics
@@ -91,6 +100,32 @@ private:
     std::unordered_map<int,int> frequency_query;
 public:
     NewModel();
+    std::vector<double> calculateClickProbabilities(const Query& serp);
+    void User_step(size_t user, size_t query, int rank,
+                   const Query& serp, double min_value, double max_value,
+                   std::vector<double>& coeffs);
+    void Query_step(size_t user, size_t query, int rank,
+                   const Query& serp, double min_value, double max_value,
+                   std::vector<double>& coeffs);
+    void Document_step(size_t user, size_t query, int rank,
+                   const Query& serp, double min_value, double max_value,
+                   std::vector<double>& coeffs);
+    void Frequency_step(size_t user, size_t query, int rank,
+                                    const Query& serp, double min_value, double max_value,
+                                    std::vector<double>& coeffs);
+};
+
+class NewModelEmbedding: public Model
+{
+private:
+    Data query_document;
+    DataEmbedding userEmbedding;
+    DataEmbedding documentUser;
+    std::unordered_map<int, std::vector<double>> query_examination;
+    std::unordered_map<int, std::vector<double>> frequency_examination;
+    std::unordered_map<int,int> frequency_query;
+public:
+    NewModelEmbedding();
     std::vector<double> calculateClickProbabilities(const Query& serp);
     void User_step(size_t user, size_t query, int rank,
                    const Query& serp, double min_value, double max_value,

@@ -9,7 +9,7 @@
 #include "collaborative_filtering.h"
 #include "mergecf_ubm.h"
 #include "newmodel.h"
-//#include "ubm.h"
+#include "baseline.h"
 #include <ctime>
 #include <ctime>
 
@@ -44,7 +44,8 @@ int main()
 //        r.Learn(out_directory + "data_stat/histogramms/resul_train", out_directory + "data_stat/histogramms/result_train");
 //        r.rate *= std::sqrt(i+1);
 //    }
-    Learner_new_model n;
-    n.learn();
+//    Learner_new_model n;
+//    n.learn();
+    BaseLine b;
 
 }

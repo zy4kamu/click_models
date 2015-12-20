@@ -37,7 +37,50 @@ double Data::Get(int key1, int key2)
     return found->second[key2];
 }
 /**********************************EndData********************************/
+/**********************************DataEmbedding*************************/
+std::vector<double> DataEmbedding::Get(int key1)
+{
+    if (data.find(key1) != data.end())
+    {
+        return data[key1];
+    }
+    else
+    {
+        //return VectorUtils::GenerateRandomVector(dim);
+        return VectorUtils::GenerateZeroVector(dim);
+    }
+}
 
+void DataEmbedding::Change(int key1, int i, double value)
+{
+    data[key1] = Get(key1);
+    data[key1][i] = value;
+}
+
+/**********************************End DataEmbedding**********************/
+/***********************************Vector Utils**************************/
+namespace VectorUtils
+{
+std::vector<double> GenerateRandomVector(int dim)
+{
+    static std::default_random_engine generator;
+    std::uniform_real_distribution<double> distribution(-1.0,1.0);
+    std::vector<double> result(dim, 0.);
+    for (double& item : result)
+    {
+        item = distribution(generator);
+    }
+    return result;
+
+}
+
+std::vector<double> GenerateZeroVector(int dim)
+{
+    std::vector<double> result(dim, 0.);
+    return result;
+}
+};
+/***********************************End VEctor Utils**********************/
 /**********************************UtilsMetrics****************************/
 namespace Utils_metrics
 {
@@ -251,7 +294,7 @@ double Model::CalculateValue(size_t start, size_t end)
 
     return sum / double(enumerator);
 }
-
+//------------------------------------------
 NewModel::NewModel()
 {
     Get_counters();
@@ -317,7 +360,7 @@ void NewModel::User_step(size_t user, size_t query, int rank,
     u_d += Params::LEARNING_RATE * coeffs[rank] *
             Examination::Value(query_document.Get(query, d), min_value, max_value) *
             Examination::Value(query_examination[query][rank], min_value, max_value) *
-            Examination::DivValue(user_document.Get(user, d));
+            Examination::DivValue(user_document.Get(user, d)) *
             Examination::Value(frequency_examination[frequency][rank], min_value, max_value);;
     user_document.Put(user, d, u_d);
 }
@@ -336,7 +379,7 @@ void NewModel::Query_step(size_t user, size_t query, int rank,
     q += Params::LEARNING_RATE * coeffs[rank] *
             Examination::Value(query_document.Get(query, d), min_value, max_value) *
             Examination::DivValue(query_examination[query][rank], min_value, max_value) *
-            Examination::Value(user_document.Get(user, d));
+            Examination::Value(user_document.Get(user, d))*
             Examination::Value(frequency_examination[frequency][rank], min_value, max_value);;
     query_examination[query][rank] = q;
 }
@@ -355,7 +398,7 @@ void NewModel::Document_step(size_t user, size_t query, int rank,
     q_d += Params::LEARNING_RATE * coeffs[rank] *
             Examination::DivValue(query_document.Get(query, d), min_value, max_value) *
             Examination::Value(query_examination[query][rank], min_value, max_value) *
-            Examination::Value(user_document.Get(user, d));
+            Examination::Value(user_document.Get(user, d)) *
             Examination::Value(frequency_examination[frequency][rank], min_value, max_value);
     query_document.Put(query, d, q_d);
 }
@@ -378,11 +421,197 @@ void NewModel::Frequency_step(size_t user, size_t query, int rank,
             Examination::DivValue(frequency_examination[frequency][rank], min_value, max_value);;
     frequency_examination[frequency][rank] = f_e;
 }
+//------------------------------------------------------------
+NewModelEmbedding::NewModelEmbedding()
+{
+    Get_counters();
+    int n_users  = 0;
+    int n_documents = 0;
+    std::vector<double> ex(10, 0);
+    userEmbedding.dim = Params::QUERYDIMENSION;
+    documentUser.dim = Params::QUERYDIMENSION;
+    for (size_t i =  Params::FIRST_TRAINING_DAY; i <=  Params::LAST_TRAINING_DAY+1; ++i)
+    {
+        DayData data = read_day( Params::DAY_DATA_FOLDER + std::to_string(i) + ".txt");
+        for (const auto& personData : data)
+        {
+            const unordered_map<size_t, Query>& sessionData = personData.second;
+            for (const auto& session : sessionData)
+            {
+                const Query& serp = session.second;
+                query_examination[serp.id] = ex;
+
+                int frequency = 0;
+                if (frequency_query.find(serp.id) != frequency_query.end())
+                {
+                    frequency = frequency_query[serp.id];
+                }
+                frequency_examination[frequency+1] = ex;
+                frequency_query[serp.id] = frequency + 1;
+                if (i == (Params::LAST_TRAINING_DAY + 1) &&
+                        GetFilterForTest(counters1.query_user, counters1.user_url, counters1.query_rank, serp))
+                {
+                    if (userEmbedding.data.find(serp.person) == userEmbedding.data.end())
+                    {
+                        n_users += 1;
+                        userEmbedding.data[serp.person] = VectorUtils::GenerateRandomVector(Params::QUERYDIMENSION);
+                            Cos::normalize(userEmbedding.data[serp.person]);
+                    }
+                    for (int j = 0; j < Params::SERP_SIZE; ++j)
+                    {
+                        if (documentUser.data.find(serp.urls[j]) == documentUser.data.end())
+                        {
+                            n_documents += 1;
+                            documentUser.data[serp.urls[j]] = std::vector<double> (Params::QUERYDIMENSION, 0);
+                                //VectorUtils::GenerateRandomVector(Params::QUERYDIMENSION);
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+    std::cout << "users " << n_users << "\n" << "documents " << n_documents << "\n";
+    int del;
+    std::cin >> del;
+}
+std::vector<double> NewModelEmbedding::calculateClickProbabilities(const Query& serp)
+{
+    double max_value = Params::MAX_EMBEDDING_VALUE;
+    double min_value = Params::MIN_EMBEDDING_VALUE;
+    int query = serp.id;
+    int user = serp.person;
+    std::vector<double> res(10, 0);
+    int frequency = 0;
+    if (frequency_query.find(serp.id) != frequency_query.end())
+    {
+        frequency = frequency_query[serp.id];
+    }
+    for (int i = 0; i < 10; ++i)
+    {
+        int document = serp.urls[i];
+        res[i] = Cos::similarity(userEmbedding.Get(serp.person), documentUser.Get(document));
+        res[i] *= Examination::Value(query_document.Get(query, document), min_value, max_value);
+        res[i] *= Examination::Value(query_examination[query][i], min_value, max_value);
+        res[i] *= Examination::Value(frequency_examination[frequency][i], min_value, max_value);
+    }
+    return res;
+}
+
+void NewModelEmbedding::User_step(size_t user, size_t query, int rank,
+                         const Query& serp, double min_value, double max_value,
+                         std::vector<double>& coeffs)
+{
+    int frequency = 0;
+    if (frequency_query.find(serp.id) != frequency_query.end())
+    {
+        frequency = frequency_query[serp.id];
+    }
+    int d = serp.urls[rank];
+    if (documentUser.data.find(d) == documentUser.data.end())
+    {
+        return;
+    }
+    if (userEmbedding.data.find(serp.person) == userEmbedding.data.end())
+    {
+        return;
+    }
+    vector<double> document = documentUser.Get(d);
+    vector<double> divDocument = Cos::divSimilarity(documentUser.Get(d), userEmbedding.Get(serp.person)
+                                                               );
+    double new_document_norm = 0;
+    for (int i = 0; i < Params::QUERYDIMENSION; ++i)
+    {
+        double value = Params::LEARNING_RATE_EMBEDDING * coeffs[rank] *
+                Examination::Value(query_examination[query][rank], min_value, max_value) *
+                Examination::Value(query_document.Get(serp.id, d)) *
+                Examination::Value(frequency_examination[frequency][rank], min_value, max_value);
+        value *= divDocument[i];
+        value += document[i];
+        new_document_norm += value * value;
+
+
+        documentUser.Change(d, i, value);
+    }
+    //if (new_document_norm > 1.)
+    {
+        vector<double> document_new = documentUser.Get(d);
+        for (int i = 0; i < Params::QUERYDIMENSION; ++i)
+        {
+
+            documentUser.Change(d, i, (document_new[i] / sqrt(new_document_norm)));
+        }
+    }
+//    vector<double> document_new = documentUser.Get(d);
+//    for (int i = 0; i < Params::QUERYDIMENSION; ++i)
+//    {
+
+//        documentUser.Change(d, i, (document_new[i] / 2.));
+//    }
+}
+
+void NewModelEmbedding::Query_step(size_t user, size_t query, int rank,
+                         const Query& serp, double min_value, double max_value,
+                         std::vector<double>& coeffs)
+{
+    int frequency = 0;
+    if (frequency_query.find(serp.id) != frequency_query.end())
+    {
+        frequency = frequency_query[serp.id];
+    }
+    double q = query_examination[query][rank];
+    int d = serp.urls[rank];
+    q += Params::LEARNING_RATE * coeffs[rank] *
+            Examination::Value(query_document.Get(query, d), min_value, max_value) *
+            Examination::DivValue(query_examination[query][rank], min_value, max_value) *
+            Cos::similarity(userEmbedding.Get(serp.person), documentUser.Get(d)) *
+            Examination::Value(frequency_examination[frequency][rank], min_value, max_value);
+    query_examination[query][rank] = q;
+}
+
+void NewModelEmbedding::Document_step(size_t user, size_t query, int rank,
+                         const Query& serp, double min_value, double max_value,
+                         std::vector<double>& coeffs)
+{;
+    int frequency = 0;
+    if (frequency_query.find(serp.id) != frequency_query.end())
+    {
+        frequency = frequency_query[serp.id];
+    }
+    int d = serp.urls[rank];
+    double q_d = query_document.Get(query, d);
+    q_d += Params::LEARNING_RATE * coeffs[rank] *
+            Examination::DivValue(query_document.Get(query, d), min_value, max_value) *
+            Examination::Value(query_examination[query][rank], min_value, max_value) *
+            Cos::similarity(userEmbedding.Get(serp.person), documentUser.Get(d)) *
+            Examination::Value(frequency_examination[frequency][rank], min_value, max_value);
+    query_document.Put(query, d, q_d);
+
+}
+
+void NewModelEmbedding::Frequency_step(size_t user, size_t query, int rank,
+                         const Query& serp, double min_value, double max_value,
+                         std::vector<double>& coeffs)
+{
+    int frequency = 0;
+    if (frequency_query.find(serp.id) != frequency_query.end())
+    {
+        frequency = frequency_query[serp.id];
+    }
+    int d = serp.urls[rank];
+    double f_e = frequency_examination[frequency][rank];
+    f_e += Params::LEARNING_RATE * coeffs[rank] *
+            Examination::Value(query_document.Get(query, d), min_value, max_value) *
+            Examination::Value(query_examination[query][rank], min_value, max_value) *
+            Cos::similarity(userEmbedding.Get(serp.person), documentUser.Get(d))  *
+            Examination::DivValue(frequency_examination[frequency][rank], min_value, max_value);;
+    frequency_examination[frequency][rank] = f_e;
+}
  /********************End New Model*******************************/
 
 
 Learner_new_model::Learner_new_model():
-    model(new NewModel()), ranker()
+    model(new NewModelEmbedding()), ranker()
 {
 
 }
@@ -399,6 +628,7 @@ void Learner_new_model::learn()
 
 void Learner_new_model::makeOneStep(int step)
 {
+    Params::LEARNING_RATE_EMBEDDING /= sqrt(1 + step);
     double bias = 1;
     std::cout << step << " " << Params::LEARNING_RATE << "\n";
     bool document_step = false;
@@ -409,17 +639,17 @@ void Learner_new_model::makeOneStep(int step)
     std::cout << "\n\nValue = " << new_result << std::endl;
     std::cout << "\n\nValue = " << this->model->CalculateValue(Params::LAST_TRAINING_DAY + 1,
                                                    Params::LAST_TRAINING_DAY + 1) << std::endl;
-    if (step <6 && step >= 1)
+    if (step < 0)
     {
         std::cout << "QUERY STEP\n";
         query_step = true;
     }
-    else if (step >= 7 && step < 12)
+    else if (step < 0)
     {
         std::cout << "DOCUMENT STEP\n";
         document_step = true;
     }
-    else if (step >= 13)
+    else if (step >= 0)
     {
         std::cout << "USER STEP\n";
         user_step = true;
@@ -455,7 +685,7 @@ void Learner_new_model::makeOneStep(int step)
                     if (step > 10) coef = step;
                     //Params::LEARNING_RATE /= sqrt(step-12);
                     this->UpgradeOneExample(serp, 2, false, true, false);
-                    this->UpgradeOneExample(serp, 1, false, true, false);
+                    //this->UpgradeOneExample(serp, 1, false, true, false);
                     //Params::LEARNING_RATE *= sqrt(step-12);
                 }
                 else
@@ -467,6 +697,7 @@ void Learner_new_model::makeOneStep(int step)
         }
     }
     last_result = new_result;
+    Params::LEARNING_RATE_EMBEDDING *= sqrt(1 + step);
 }
 
 
@@ -484,10 +715,18 @@ void Learner_new_model::UpgradeOneExample(const Query& serp, int truth_type, boo
     {
         truth[rank] = serp.type[rank] >= truth_type;
     }
-
+//    for (int i = 0; i < 10; ++i)
+//    {
+//        std::cout << truth[i] << " ";
+//    }
+//    std::cout << "\n";
 
     std::vector<double> scores = model->calculateClickProbabilities(serp);
-
+//    for (int i = 0; i < 10; ++i)
+//    {
+//        std::cout << scores[i] << " ";
+//    }
+//    std::cout << "\n";
     std::vector<double> coeffs = ranker.Get_Coeffs(scores, truth);
 
     for (int rank = 0; rank < 10; ++rank)
@@ -510,5 +749,11 @@ void Learner_new_model::UpgradeOneExample(const Query& serp, int truth_type, boo
             this->model->Frequency_step(user, query, rank, serp, min_value, max_value, coeffs);
         }
     }
+//    std::vector<double> scores1 = model->calculateClickProbabilities(serp);
+//    for (int i = 0; i < 10; ++i)
+//    {
+//        std::cout << scores1[i] << " ";
+//    }
+//    std::cout << "\n\n";
 
 }
