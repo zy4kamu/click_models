@@ -17,9 +17,11 @@ struct Query
 };
 
 typedef unordered_map<size_t, unordered_map<size_t, Query> > DayData;
+typedef unordered_map<size_t, unordered_map<size_t, unordered_map<size_t, Query>> > DayData1;
 
 void separate_by_day(const string& file, const string& outFolder);
 DayData read_day(const string& file);
+DayData1 read_day1(const string& file);
 
 
 #endif

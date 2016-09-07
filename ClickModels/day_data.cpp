@@ -34,7 +34,7 @@ void separate_by_day(const string& file, const string& outFolder)
             out->write((char*)&terms[i], sizeof(size_t));
         }
         if (++enumerator % 100000 == 0) {
-            std::cout << enumerator << std::endl;
+            std::cout << enumerator << " " << person << std::endl;
         }
     }
     input.close();
@@ -87,3 +87,43 @@ DayData read_day(const string& file)
     return data;
 }
 
+DayData1 read_day1(const string& file)
+{
+    std::cout << "reading file " << file << std::endl;
+    DayData1 data;
+    ifstream input(file, std::ios::binary | std::ios::in);
+    size_t person, session, query, url, rank, domain;
+    vector<size_t> terms(5,0);
+    int type;
+    size_t enumerator = 0;
+    while(!input.eof())
+    {
+        if (++enumerator % 10000000 == 0) {
+            std::cout << "read day from file " << file << " ; iteration = " << enumerator << std::endl;
+        }
+        input.read((char*)&person, sizeof(size_t));
+        input.read((char*)&session, sizeof(size_t));
+        input.read((char*)&query, sizeof(size_t));
+        input.read((char*)&url, sizeof(size_t));
+        input.read((char*)&type, sizeof(int));
+        input.read((char*)&rank, sizeof(size_t));
+        input.read((char*)&domain, sizeof(size_t));
+        for (int i = 0; i < terms.size(); ++i)
+        {
+            input.read((char*)&terms[i], sizeof(size_t));
+        }
+        Query& addedQuery = take(take(take(data, person), session), query);
+        addedQuery.id = query;
+        addedQuery.session = session;
+        addedQuery.person = person;
+        addedQuery.urls[rank] = url;
+        addedQuery.type[rank] = type;
+        addedQuery.domains[rank] = domain;
+        for (int i = 0; i < 5; ++i)
+        {
+            addedQuery.terms[i] = terms[i];
+        }
+    }
+    input.close();
+    return data;
+}

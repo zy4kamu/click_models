@@ -1,6 +1,6 @@
 #include "baseline.h"
 
-static const std::string OUT_DIRECTORY =  "/Users/annasepliaraskaia/Desktop/work/";
+static const std::string OUT_DIRECTORY =  "/Users/irtalk/Desktop/UVA/first/";
 static const std::string DAY_DATA_FOLDER = OUT_DIRECTORY + "data_by_days/";
 static const std::string DAY_DATA_FOLDER_VW = OUT_DIRECTORY + "data_by_days_VW/";
 static const int SERP_SIZE = 10;
@@ -32,7 +32,13 @@ void BaseLine::Write_Example(int enumerator, int rank,
 {
     //std::cout << "Enumerator " << enumerator << " " <<serp.type[rank] << "\n";
     int label = serp.type[rank] >= 1;
-    (*file) << label << " " << 1. << " '" <<enumerator << " | ";
+    label = 2 * (label - 0.5);
+    int weight = 1.;
+    if (serp.type[rank] == 2)
+    {
+        weight = 2.;
+    }
+    (*file) << label << " " << weight << " '" <<enumerator << " | ";
     (*file) << "r" << rank << " ";
     (*file) << "q" << serp.id << " ";
     for (int i = 0; i < serp.terms.size(); ++i)
@@ -86,63 +92,78 @@ BaseLine::BaseLine()
     int last_session = -1;
     std::unordered_map<int, Url_type> local;
     int enumerator = 0;
-    for (size_t day =  1; day <=  2; ++day)
+    for (size_t day =  1; day <=  6; ++day)
     {
-        DayData data = read_day(DAY_DATA_FOLDER + std::to_string(day) + ".txt");
+        DayData1 data = read_day1(DAY_DATA_FOLDER + std::to_string(day) + ".txt");
         for (const auto& personData : data)
         {
-            const unordered_map<size_t, Query>& sessionData = personData.second;
+            const unordered_map<size_t, unordered_map<size_t, Query>>& sessionData = personData.second;
             for (const auto& session : sessionData)
             {
-                const Query& serp = session.second;
-                if (enumerator % 1000000 == 0)
+                local.clear();
+                for (const auto& q: session.second)
                 {
-                    std::cout << enumerator << "\n";
-                }
-                if (last_person != serp.person || last_session != serp.session)
-                {
-                    local.clear();
-                }
-                for (int i = 0; i < SERP_SIZE; ++i)
-                {
-                    ++enumerator;
-                    Write_Example(enumerator, i,local,serp, outs[day]);
-                }
-                for (int i = 0; i < SERP_SIZE; ++i)
-                {
-                    users.data[serp.person];
-                    users.data[serp.person][serp.urls[i]];
-                    local[serp.urls[i]];
-                    if (serp.type[i] == -2)
-                    {
-                        users.data[serp.person][serp.urls[i]].missed += 1;
-                        local[serp.urls[i]].missed += 1;
+                    const Query &serp = q.second;
+                    if (enumerator % 1000000 == 0) {
+                        std::cout << enumerator << "\n";
                     }
-                    if (serp.type[i] == -1)
-                    {
-                        users.data[serp.person][serp.urls[i]].skipped += 1;
-                        local[serp.urls[i]].skipped += 1;
+                    if (last_person != serp.person || last_session != serp.session) {
+                        local.clear();
+                        for (int i = 0; i < SERP_SIZE; ++i) {
+                            ++enumerator;
+                            Write_Example(enumerator, i, local, serp, outs[day]);
+                        }
                     }
-                    if (serp.type[i] == 0)
-                    {
-                        users.data[serp.person][serp.urls[i]].clicked += 1;
-                        local[serp.urls[i]].clicked += 1;
+                    int last_click = 0;
+                    for (int i = 0; i < SERP_SIZE; ++i) {
+                        if (serp.type[i] >= 1) {
+                            last_click = i;
+                        }
                     }
-                    if (serp.type[i] == 1)
+                    /*for (int i = 0; i < SERP_SIZE; ++i)
                     {
-                        users.data[serp.person][serp.urls[i]].clicked_1 += 1;
-                        local[serp.urls[i]].clicked_1 += 1;
+                        if (serp.type[i] < 1)
+                        {
+                            if (i < last_click)
+                            {
+                                serp.type[i] = -1;
+                            }
+                            else
+                            {
+                                serp.type[i] = -2;
+                            }
+                        }
+                    }*/
+                    for (int i = 0; i < SERP_SIZE; ++i) {
+                        users.data[serp.person];
+                        users.data[serp.person][serp.urls[i]];
+                        local[serp.urls[i]];
+                        if (serp.type[i] < 1 && i > last_click) {
+                            users.data[serp.person][serp.urls[i]].missed += 1;
+                            local[serp.urls[i]].missed += 1;
+                        }
+                        if (serp.type[i] < 1 && i < last_click) {
+                            users.data[serp.person][serp.urls[i]].skipped += 1;
+                            local[serp.urls[i]].skipped += 1;
+                        }
+                        if (serp.type[i] < 0) {
+                            users.data[serp.person][serp.urls[i]].clicked += 1;
+                            local[serp.urls[i]].clicked += 1;
+                        }
+                        if (serp.type[i] == 1) {
+                            users.data[serp.person][serp.urls[i]].clicked_1 += 1;
+                            local[serp.urls[i]].clicked_1 += 1;
+                        }
+                        if (serp.type[i] == 2) {
+                            users.data[serp.person][serp.urls[i]].clicked_2 += 1;
+                            local[serp.urls[i]].clicked_2 += 1;
+                        }
                     }
-                    if (serp.type[i] == 2)
-                    {
-                        users.data[serp.person][serp.urls[i]].clicked_2 += 1;
-                        local[serp.urls[i]].clicked_2 += 1;
-                    }
-                }
-                last_person = serp.person;
-                last_session = serp.session;
+                    last_person = serp.person;
+                    last_session = serp.session;
 
 
+                }
             }
         }
     }

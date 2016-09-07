@@ -8,6 +8,7 @@ struct Counters
     uumap query_url;
     uumap user_url;
     uumap user_rank;
+    uumap user_query;
     uumap query_user;
     uumap query_rank;
 
