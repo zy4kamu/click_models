@@ -31,7 +31,6 @@ def parse_sessions(file):
     s = None
     for line in file:
         sline = line.strip().split('\t')
-        
         if len(sline) == 4 and s is not None:
             yield s
         
@@ -77,19 +76,24 @@ def Click_types(URLSDOMAINS, clicks):
     #url, type, rank, domain
     times = []
     for t in clicks:
-        times.append(clicks[t]['TimePassed'])
-    times.sort()
+        times.append([clicks[t]['TimePassed'], clicks[t]['URLID']])
+    times.sort(key = lambda x : x[0])
+    least_rank = 0
+    types = {}
+    for r,t in enumerate(times):
+        type = 0
+        if (r == len(times) - 1):
+            type = 2
+        else :
+            if (times[r+1][0] - t[0] >= 400):
+                type = 2
+            elif (times[r+1][0] - t[0] >= 50):
+                type = 1
+        types[t[1]] = type
     for r,i in enumerate(URLSDOMAINS):
         type = 0
-        if i[0] in clicks:
-            n_clicks_seen += 1
-            if (n_clicks_seen == n_clicks):
-                type = 2
-            else :
-                if (times[n_clicks_seen] - times[n_clicks_seen - 1] > 400):
-                    type = 2
-                elif(times[n_clicks_seen] - times[n_clicks_seen - 1] > 50):
-                    type = 1
+        if i[0] in types:
+            type = types[i[0]] 
         result.append([i[0], type, r, i[1]])
     return result
 

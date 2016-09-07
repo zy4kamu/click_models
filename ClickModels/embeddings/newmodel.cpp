@@ -1,4 +1,5 @@
 #include "newmodel.h"
+#include <algorithm>
 
 static double last_result = 0;
 static Counters counters1;
@@ -10,6 +11,30 @@ void Get_counters()
         calculate_counters(dayData, counters1);
     }
 }
+
+void DeleteElementsFromUUMAP(uumap& m, const std::set<size_t>& s)
+{
+    for (auto it = m.data.begin(); it != m.data.end();)
+    {
+       if(s.find(it->first) == s.end()) {
+          it = m.data.erase(it);
+       }
+       else
+          it++;
+    }
+}
+
+void DeleteSomeCounters(const std::set<size_t>& users,
+                        const std::set<size_t>& queries)
+{
+   DeleteElementsFromUUMAP(counters1.query_rank, queries);
+   DeleteElementsFromUUMAP(counters1.query_url, queries);
+   DeleteElementsFromUUMAP(counters1.query_user, queries);
+   DeleteElementsFromUUMAP(counters1.user_rank, users);
+   DeleteElementsFromUUMAP(counters1.user_url, users);
+    DeleteElementsFromUUMAP(counters1.user_query, users);
+}
+
 /***************************************Data****************************/
 void Data::Put(int key1, int key2, double value)
 {
@@ -108,7 +133,7 @@ std::vector<double> DoubleClick(const Query& serp)
     for (int i = 0; i < 10; ++i)
     {
         const vector<double>& found = counters1.user_url.watch(user, serp.urls[i]);
-        if (found.size() > 0 && found[0] > 1 - 1e-5)
+        if (found.size() > 0 && found[0] > 1)
         {
             evristic[i] = 1;
         }
@@ -122,6 +147,7 @@ void Get_tops(const Query& serp,
     bool right_answer = false;
     for (int i = 0; i < Params::SERP_SIZE; ++i)
     {
+        //std::cout << probs[0] << " " << serp.type[probs[0]] << "\n";
         if (serp.type[probs[i]] == 2)
         {
             right_answer = true;
@@ -216,7 +242,10 @@ double Model::CalculateValue(size_t start, size_t end)
     std::vector<double> top1Evristic(10, 0);
     std::vector<double> top1DoubleClick(10, 0);
     std::vector<double> top1AfterBefore(10, 0);
-
+    std::ofstream probs_file(Params::OUT_DIRECTORY + "probs.txt");
+    std::ofstream evrisitc_file(Params::OUT_DIRECTORY + "evristic.txt");
+    std::ofstream dclick_file(Params::OUT_DIRECTORY + "dclick.txt");
+    std::ofstream orig_file(Params::OUT_DIRECTORY + "orig.txt");
     double NDCGBefore = 0;
     double NDCGAfter = 0;
     double NDCGEvristic = 0;
@@ -240,11 +269,41 @@ double Model::CalculateValue(size_t start, size_t end)
                 std::vector<double> probs = calculateClickProbabilities(serp);
                 std::vector<double> evristic = Utils_metrics::Evristic(serp);
                 std::vector<double> dclick = Utils_metrics::DoubleClick(serp);
+                for (int i = 0; i < Params::SERP_SIZE; ++i)
+                {
+                    probs_file << probs[i] << " ";
+                    evrisitc_file << evristic[i] << " ";
+                    dclick_file << dclick[i] << " ";
+                    orig_file << serp.type[i] << " ";
+
+                }
+                probs_file << int(Filter1(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << int(Filter2(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << int(Filter3(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << int(Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << counters1.user_query.watch(serp.person).size() << "\n";
+
+                evrisitc_file << int(Filter1(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << int(Filter2(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << int(Filter3(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << int(Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << counters1.user_query.watch(serp.person).size() << "\n";
+                dclick_file << int(Filter1(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << int(Filter2(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << int(Filter3(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << int(Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << counters1.user_query.watch(serp.person).size() << "\n";
+                orig_file << int(Filter1(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << int(Filter2(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << int(Filter3(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << int(Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << counters1.user_query.watch(serp.person).size() << "\n";
                 std::vector<double> r(10, 0.);
                 std::vector<double> ideal(10, 0);
                 for (int i = 0; i < 10; ++i)
                 {
                     ideal[i] = serp.type[i];
+                    r[i] = 10 - i;
                 }
                 double ideal_DCG = Utils_metrics::Get_NDCG(serp, sort(ideal));
 
@@ -297,29 +356,52 @@ double Model::CalculateValue(size_t start, size_t end)
 //------------------------------------------
 NewModel::NewModel()
 {
-    Get_counters();
+    //Get_counters();
     std::vector<double> ex(10, 0);
-    for (size_t i =  Params::FIRST_TRAINING_DAY; i <=  Params::LAST_TRAINING_DAY+1; ++i)
     {
-        DayData data = read_day( Params::DAY_DATA_FOLDER + std::to_string(i) + ".txt");
+        DayData data = read_day( Params::DAY_DATA_FOLDER +
+                             std::to_string(Params::LAST_TRAINING_DAY+1) + ".txt");
+        std::set<size_t> users;
+        std::set<size_t> queries;
         for (const auto& personData : data)
         {
             const unordered_map<size_t, Query>& sessionData = personData.second;
             for (const auto& session : sessionData)
             {
                 const Query& serp = session.second;
-                query_examination[serp.id] = ex;
-
-                int frequency = 0;
-                if (frequency_query.find(serp.id) != frequency_query.end())
-                {
-                    frequency = frequency_query[serp.id];
-                }
-                frequency_examination[frequency+1] = ex;
-                frequency_query[serp.id] = frequency + 1;
+                queries.insert(serp.id);
+                users.insert(serp.person);
 
             }
         }
+        for (size_t i =  Params::FIRST_TRAINING_DAY; i <=  Params::LAST_TRAINING_DAY + 1; ++i)
+        {
+            DayData dayData = read_day(Params::DAY_DATA_FOLDER + std::to_string(i) + ".txt");
+            if (i <= Params::LAST_TRAINING_DAY)
+            {
+                calculate_counters(dayData, counters1);
+                DeleteSomeCounters(users, queries);
+            }
+            for (const auto& personData : data)
+            {
+                const unordered_map<size_t, Query>& sessionData = personData.second;
+                for (const auto& session : sessionData)
+                {
+                    const Query& serp = session.second;
+                    query_examination[serp.id] = ex;
+
+                    int frequency = 0;
+                    if (frequency_query.find(serp.id) != frequency_query.end())
+                    {
+                        frequency = frequency_query[serp.id];
+                    }
+                    frequency_examination[frequency+1] = ex;
+                    frequency_query[serp.id] = frequency + 1;
+
+                }
+            }
+        }
+
     }
 }
 
@@ -472,8 +554,6 @@ NewModelEmbedding::NewModelEmbedding()
         }
     }
     std::cout << "users " << n_users << "\n" << "documents " << n_documents << "\n";
-    int del;
-    std::cin >> del;
 }
 std::vector<double> NewModelEmbedding::calculateClickProbabilities(const Query& serp)
 {
@@ -611,7 +691,7 @@ void NewModelEmbedding::Frequency_step(size_t user, size_t query, int rank,
 
 
 Learner_new_model::Learner_new_model():
-    model(new NewModelEmbedding()), ranker()
+    model(new NewModel()), ranker()
 {
 
 }
@@ -634,17 +714,19 @@ void Learner_new_model::makeOneStep(int step)
     bool document_step = false;
     bool user_step = false;
     bool query_step = false;
-    double new_result = this->model->CalculateValue( Params::LAST_TRAINING_DAY, Params::LAST_TRAINING_DAY);
+    //double new_result = this->model->CalculateValue( Params::LAST_TRAINING_DAY, Params::LAST_TRAINING_DAY);
 
-    std::cout << "\n\nValue = " << new_result << std::endl;
-    std::cout << "\n\nValue = " << this->model->CalculateValue(Params::LAST_TRAINING_DAY + 1,
-                                                   Params::LAST_TRAINING_DAY + 1) << std::endl;
-    if (step < 0)
+    //std::cout << "\n\nValue = " << new_result << std::endl;
+    if (step % 5 == 0) {
+        std::cout << "\n\nValue = " << this->model->CalculateValue(Params::LAST_TRAINING_DAY + 1,
+                                                                   Params::LAST_TRAINING_DAY + 1) << std::endl;
+    }
+    if (step < 5)
     {
         std::cout << "QUERY STEP\n";
         query_step = true;
     }
-    else if (step < 0)
+    else if (step < 10)
     {
         std::cout << "DOCUMENT STEP\n";
         document_step = true;
@@ -663,10 +745,10 @@ void Learner_new_model::makeOneStep(int step)
             for (const auto& session : sessionData)
             {
                 const Query& serp = session.second;
-                if (!GetFilter(counters1.query_user, counters1.user_url, counters1.query_rank, serp))
-                    continue;
                 if (query_step)
                 {
+                    if (!GetFilter(counters1.query_user, counters1.user_url, counters1.query_rank, serp))
+                        continue;
                     //Params::LEARNING_RATE /= sqrt(step);
                     this->UpgradeOneExample(serp, 2,false, false, true);
                     this->UpgradeOneExample(serp, 1,false, false, true);
@@ -675,12 +757,21 @@ void Learner_new_model::makeOneStep(int step)
                 else if (document_step)
                 {
                     //Params::LEARNING_RATE /= sqrt(step-8);
+                    if (!GetFilter(counters1.query_user, counters1.user_url, counters1.query_rank, serp))
+                        continue;
                     this->UpgradeOneExample(serp, 2, true, false, false);
                     this->UpgradeOneExample(serp, 1, true, false, false);
                     //Params::LEARNING_RATE *= sqrt(step-8);
                 }
                 else if (user_step)
                 {
+
+                    if (!Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp))
+                        continue;
+                    if (!Filter2(counters1.query_user, counters1.user_url, counters1.query_rank, serp))
+                        continue;
+                    if (!Filter3Mine(counters1.query_user, counters1.user_url, counters1.query_rank, serp))
+                        continue;
                     double coef = sqrt(step + 1);
                     if (step > 10) coef = step;
                     //Params::LEARNING_RATE /= sqrt(step-12);
@@ -696,7 +787,7 @@ void Learner_new_model::makeOneStep(int step)
             }
         }
     }
-    last_result = new_result;
+    //last_result = new_result;
     Params::LEARNING_RATE_EMBEDDING *= sqrt(1 + step);
 }
 
