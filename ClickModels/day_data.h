@@ -22,6 +22,7 @@ typedef unordered_map<size_t, unordered_map<size_t, unordered_map<size_t, Query>
 void separate_by_day(const string& file, const string& outFolder);
 DayData read_day(const string& file);
 DayData1 read_day1(const string& file);
+void MAkeFileBinary(const string& file, const string& outfile);
 
 
 #endif

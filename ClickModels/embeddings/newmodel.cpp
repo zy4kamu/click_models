@@ -242,10 +242,10 @@ double Model::CalculateValue(size_t start, size_t end)
     std::vector<double> top1Evristic(10, 0);
     std::vector<double> top1DoubleClick(10, 0);
     std::vector<double> top1AfterBefore(10, 0);
-    std::ofstream probs_file(Params::OUT_DIRECTORY + "probs.txt");
-    std::ofstream evrisitc_file(Params::OUT_DIRECTORY + "evristic.txt");
-    std::ofstream dclick_file(Params::OUT_DIRECTORY + "dclick.txt");
-    std::ofstream orig_file(Params::OUT_DIRECTORY + "orig.txt");
+    std::ofstream probs_file(Params::OUT_DIRECTORY + "probs1.txt");
+    std::ofstream evrisitc_file(Params::OUT_DIRECTORY + "evristic1.txt");
+    std::ofstream dclick_file(Params::OUT_DIRECTORY + "dclick1.txt");
+    std::ofstream orig_file(Params::OUT_DIRECTORY + "orig1.txt");
     double NDCGBefore = 0;
     double NDCGAfter = 0;
     double NDCGEvristic = 0;
@@ -269,6 +269,11 @@ double Model::CalculateValue(size_t start, size_t end)
                 std::vector<double> probs = calculateClickProbabilities(serp);
                 std::vector<double> evristic = Utils_metrics::Evristic(serp);
                 std::vector<double> dclick = Utils_metrics::DoubleClick(serp);
+                int user_history = 0;
+                if (counters1.user_query.watch(serp.person, -1).size() > 0)
+                {
+                    user_history = counters1.user_query.watch(serp.person, -1)[0];
+                }
                 for (int i = 0; i < Params::SERP_SIZE; ++i)
                 {
                     probs_file << probs[i] << " ";
@@ -281,23 +286,23 @@ double Model::CalculateValue(size_t start, size_t end)
                            << int(Filter2(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter3(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
-                           << counters1.user_query.watch(serp.person).size() << "\n";
+                           << user_history << "\n";
 
                 evrisitc_file << int(Filter1(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter2(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter3(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
-                           << counters1.user_query.watch(serp.person).size() << "\n";
+                           << user_history << "\n";
                 dclick_file << int(Filter1(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter2(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter3(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
-                           << counters1.user_query.watch(serp.person).size() << "\n";
+                           << user_history << "\n";
                 orig_file << int(Filter1(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter2(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter3(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
-                           << counters1.user_query.watch(serp.person).size() << "\n";
+                           << user_history << "\n";
                 std::vector<double> r(10, 0.);
                 std::vector<double> ideal(10, 0);
                 for (int i = 0; i < 10; ++i)

@@ -36,9 +36,9 @@ file(GLOB headers
 add_library(click-models STATIC ${sources} ${headers} ${sourceheaders})
 
 add_executable(click-models-app main.cpp)
-target_link_libraries(click-models-app LINK_PUBLIC pthread click-models tools csvManager)
+target_link_libraries(click-models-app LINK_PUBLIC pthread click-models)
 
 add_executable(embeddings-app embeddings/main.cpp)
-target_link_libraries(embeddings-app LINK_PUBLIC pthread click-models tools csvManager)
+target_link_libraries(embeddings-app LINK_PUBLIC pthread click-models)
 
 

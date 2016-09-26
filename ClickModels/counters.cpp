@@ -64,7 +64,7 @@ void calculate_counters(const DayData& data, Counters& counters1)
             const Query& query = item1.second;
             counters1.query_user.get(query.id, query.person, 1)[0] += 1;
             counters1.user_query.get(query.person, query.id, 1)[0] += 1;
-
+            counters1.user_query.get(query.person, -1, 1)[0] += 1;
             for (size_t i = 0; i <= query.type.size(); ++i)
             {
                 if (query.type[i] == 2)

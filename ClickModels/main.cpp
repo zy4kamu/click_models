@@ -128,15 +128,17 @@ void TryTester()
 
 int main() 
 {
+
     std::cout << "click-models: main.cpp is running..." << std::endl;
     //const string dataFolder = "/home/stepan/click_models_data/";
-    string dataFolder= "/Users/annasepliaraskaia/Desktop/work/";
+    string dataFolder= "/Users/irtalk/Desktop/UVA/first/";
       //string dataFolder = "/home/anna/Рабочий стол/work/data/";
 // 1.
-    auto start = clock();
-    separate_by_day(dataFolder + "kaggle_yandex/my_data/train", dataFolder + "data_by_days/");
-    auto end = clock();
-    std::cout << double(end - start) /  CLOCKS_PER_SEC << std::endl;
+    //auto start = clock();
+    //MAkeFileBinary("/Users/irtalk/Desktop/UVA/first/my_data/train", "/Users/irtalk/Desktop/UVA/first/my_data/train_bin");
+    separate_by_day(dataFolder + "my_data/train", dataFolder + "data_by_days/");
+    //auto end = clock();
+    //std::cout << double(end - start) /  CLOCKS_PER_SEC << std::endl;
 // 2.
 //    calculate_counters(dataFolder + "data_by_days/", 1, 24);
 

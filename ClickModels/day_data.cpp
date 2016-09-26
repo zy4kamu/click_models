@@ -1,5 +1,40 @@
 #include "day_data.h"
 
+void MAkeFileBinary(const string& file, const string& outfile)
+{
+    std::cout << "run reading file " << file << std::endl;
+    ofstream out(outfile, std::ios::binary | std::ios::out);
+    ifstream input(file);
+    size_t person, session, query, day, url, rank, domain;
+    vector<size_t> terms(5,0);
+    int type;
+    size_t enumerator = 0;
+    while(!input.eof())
+    {
+        input >> person >> session >> query >> day >> url >> type >> rank >> domain;
+        for (int i = 0; i < 5; ++i)
+        {
+            input >> terms[i];
+        }
+        out.write((char*)&person, sizeof(size_t));
+        out.write((char*)&session, sizeof(size_t));
+        out.write((char*)&query, sizeof(size_t));
+        out.write((char*)&day, sizeof(size_t));
+        out.write((char*)&url, sizeof(size_t));
+        out.write((char*)&type, sizeof(int));
+        out.write((char*)&rank, sizeof(size_t));
+        out.write((char*)&domain, sizeof(size_t));
+        for (int i = 0; i < terms.size(); ++i)
+        {
+            out.write((char*)&terms[i], sizeof(size_t));
+        }
+        if (++enumerator % 100000 == 0) {
+            std::cout << enumerator << " " << person << std::endl;
+        }
+    }
+    input.close();
+    out.close();
+}
 void separate_by_day(const string& file, const string& outFolder)
 {
     std::cout << "run reading file " << file << std::endl;
@@ -45,7 +80,10 @@ void separate_by_day(const string& file, const string& outFolder)
     }
     std::cout << "end reading file " << file << std::endl;
 }
+void WriteDataBinary()
+{
 
+}
 DayData read_day(const string& file)
 {
     std::cout << "reading file " << file << std::endl;
