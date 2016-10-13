@@ -21,6 +21,7 @@ bool Filter2(const uumap& queryUser, const uumap& userUrl, const uumap& queryRan
 bool Filter3(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
 bool Filter4(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
 bool Filter5(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
+bool Filter6(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
 bool Filter3Mine(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history, int min_number = 1, int max_number = 100000);
 bool GetFilter(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);
 bool GetFilterForTest(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history);

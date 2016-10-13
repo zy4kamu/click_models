@@ -147,7 +147,7 @@ void Get_counters_at_test_set()
 
 BaseLine::BaseLine()
 {
-    //Get_counters_at_test_set();
+    Get_counters_at_test_set();
 
     vector<ofstream*> outs;
     for (size_t i = 0; i < 30; ++i)
@@ -210,7 +210,7 @@ BaseLine::BaseLine()
                 {
                     std::cout << enumerator << "\n";
                 }
-                if (last_person != person || last_session != session) {
+                if (true) {
                     /*std::cout << "QUERY " << serp.person << " " << serp.id << " " << serp.session << " ";
                     for (int i = 0 ; i < SERP_SIZE; ++i)
                     {
@@ -219,7 +219,13 @@ BaseLine::BaseLine()
                     std::cout << std::endl;*/
                     for (int i = 0; i < SERP_SIZE; ++i)
                     {
-                        if (last_day <= 21 && Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp))
+                        if (last_day == 21 && Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp))
+                        {
+                            if (last_session != session) {
+                                Write_Example(enumerator, i, local, serp, outs[last_day]);
+                            }
+                        }
+                        if (last_day < 21 && Filter6(counters1.query_user, counters1.user_url, counters1.query_rank, serp))
                         {
 
                             Write_Example(enumerator, i, local, serp, outs[last_day]);
@@ -229,7 +235,11 @@ BaseLine::BaseLine()
                     {
                         users.data.clear();
                     }
-                    local.clear();
+                    if (last_session != session)
+                    {
+
+                        local.clear();
+                    }
                 }
                 int last_click = 0;
                 for (int i = 0; i < SERP_SIZE; ++i) {
@@ -261,6 +271,15 @@ BaseLine::BaseLine()
                         users.data[serp.person][serp.urls[i]].clicked_2 += 1;
                         local[serp.urls[i]].clicked_2 += 1;
                     }
+                }
+                if (last_person != person)
+                {
+                    users.data.clear();
+                }
+                if (last_session != session)
+                {
+
+                    local.clear();
                 }
 
             }

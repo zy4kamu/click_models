@@ -245,7 +245,7 @@ double Model::CalculateValue(size_t start, size_t end)
     std::ofstream probs_file(Params::OUT_DIRECTORY + "probs1.txt");
     std::ofstream evrisitc_file(Params::OUT_DIRECTORY + "evristic1.txt");
     std::ofstream dclick_file(Params::OUT_DIRECTORY + "dclick1.txt");
-    std::ofstream orig_file(Params::OUT_DIRECTORY + "orig1.txt");
+    std::ofstream orig_file(Params::OUT_DIRECTORY + "orig" + std::to_string(start) + ".txt");
     double NDCGBefore = 0;
     double NDCGAfter = 0;
     double NDCGEvristic = 0;
@@ -266,7 +266,7 @@ double Model::CalculateValue(size_t start, size_t end)
                     continue;
                 }
 
-                std::vector<double> probs = calculateClickProbabilities(serp);
+                //std::vector<double> probs = calculateClickProbabilities(serp);
                 std::vector<double> evristic = Utils_metrics::Evristic(serp);
                 std::vector<double> dclick = Utils_metrics::DoubleClick(serp);
                 int user_history = 0;
@@ -276,33 +276,40 @@ double Model::CalculateValue(size_t start, size_t end)
                 }
                 for (int i = 0; i < Params::SERP_SIZE; ++i)
                 {
-                    probs_file << probs[i] << " ";
+                   // probs_file << probs[i] << " ";
                     evrisitc_file << evristic[i] << " ";
                     dclick_file << dclick[i] << " ";
                     orig_file << serp.type[i] << " ";
 
                 }
-                probs_file << int(Filter1(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                for (int i = 0; i < Params::SERP_SIZE; ++i)
+                {
+                    probs_file << serp.urls[i] << " ";
+                    evrisitc_file << serp.urls[i] << " ";
+                    dclick_file << serp.urls[i] << " ";
+                    orig_file << serp.urls[i] << " ";
+
+                }
+                /*probs_file << int(Filter1(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter2(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
-                           << int(Filter3(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << int(counters1.query_user.watch(serp.id).size())
                            << int(Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
-                           << user_history << "\n";
+                           << user_history << " " << serp.id <<"\n";*/
 
                 evrisitc_file << int(Filter1(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
-                           << int(Filter2(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
-                           << int(Filter3(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
-                           << int(Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
-                           << user_history << "\n";
+                              << int(Filter2(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                              << int(Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                           << user_history << " " << serp.id << "\n";
                 dclick_file << int(Filter1(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter2(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter3(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
-                           << user_history << "\n";
+                           << user_history << " " << serp.id << "\n";
                 orig_file << int(Filter1(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
                            << int(Filter2(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
-                           << int(Filter3(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
+                          << int(counters1.query_url.watch(serp.id).size()) <<" "
                            << int(Filter4(counters1.query_user, counters1.user_url, counters1.query_rank, serp)) << " "
-                           << user_history << "\n";
+                           << user_history << " " << serp.id << "\n";
                 std::vector<double> r(10, 0.);
                 std::vector<double> ideal(10, 0);
                 for (int i = 0; i < 10; ++i)
@@ -312,19 +319,19 @@ double Model::CalculateValue(size_t start, size_t end)
                 }
                 double ideal_DCG = Utils_metrics::Get_NDCG(serp, sort(ideal));
 
-                Utils_metrics::Get_tops(serp,sort(probs), top1After);
+//                Utils_metrics::Get_tops(serp,sort(probs), top1After);
                 Utils_metrics::Get_tops(serp, sort(evristic), top1Evristic);
                 Utils_metrics::Get_tops(serp, sort(dclick), top1DoubleClick);
                 Utils_metrics::Get_tops(serp, sort(r), top1Before);
-                Utils_metrics::Get_tops(serp,
-                                        Utils_metrics::Merge_two_rankers(sort(probs) , sort(r)), top1AfterBefore);
+ //               Utils_metrics::Get_tops(serp,
+ //                                       Utils_metrics::Merge_two_rankers(sort(probs) , sort(r)), top1AfterBefore);
 
-                NDCGAfter +=  (Utils_metrics::Get_NDCG(serp,sort(probs)) + 1e-10) / (ideal_DCG + 1e-10);
+//                NDCGAfter +=  (Utils_metrics::Get_NDCG(serp,sort(probs)) + 1e-10) / (ideal_DCG + 1e-10);
                 NDCGEvristic += (Utils_metrics::Get_NDCG(serp, sort(evristic)) + 1e-10) / (ideal_DCG + 1e-10);
                 NDCGDoubleClick += (Utils_metrics::Get_NDCG(serp, sort(dclick)) + 1e-10) / (ideal_DCG + 1e-10);
                 NDCGBefore += (Utils_metrics::Get_NDCG(serp, sort(r))+ 1e-10) / (ideal_DCG + 1e-10);
-                NDCGAfterBefore += (Utils_metrics::Get_NDCG(serp,
-                                                            Utils_metrics::Merge_two_rankers(sort(probs) , sort(r)))+ 1e-10) / (ideal_DCG + 1e-10);
+//                NDCGAfterBefore += (Utils_metrics::Get_NDCG(serp,
+//                                                            Utils_metrics::Merge_two_rankers(sort(probs) , sort(r)))+ 1e-10) / (ideal_DCG + 1e-10);
                 enumerator += 1;
             }
         }
@@ -364,30 +371,36 @@ NewModel::NewModel()
     //Get_counters();
     std::vector<double> ex(10, 0);
     {
-        DayData data = read_day( Params::DAY_DATA_FOLDER +
-                             std::to_string(Params::LAST_TRAINING_DAY+1) + ".txt");
+
         std::set<size_t> users;
         std::set<size_t> queries;
-        for (const auto& personData : data)
-        {
-            const unordered_map<size_t, Query>& sessionData = personData.second;
-            for (const auto& session : sessionData)
-            {
-                const Query& serp = session.second;
-                queries.insert(serp.id);
-                users.insert(serp.person);
+        for (int i = 21; i < 28; ++i) {
+            DayData data = read_day(Params::DAY_DATA_FOLDER +
+                                    std::to_string(i) + ".txt");
+            for (const auto &personData : data) {
+                const unordered_map<size_t, Query> &sessionData = personData.second;
+                for (const auto &session : sessionData) {
+                    const Query &serp = session.second;
+                    queries.insert(serp.id);
+                    users.insert(serp.person);
 
+                }
             }
         }
-        for (size_t i =  Params::FIRST_TRAINING_DAY; i <=  Params::LAST_TRAINING_DAY + 1; ++i)
+        for (size_t i =  Params::FIRST_TRAINING_DAY; i <= 28; ++i)
         {
             DayData dayData = read_day(Params::DAY_DATA_FOLDER + std::to_string(i) + ".txt");
-            if (i <= Params::LAST_TRAINING_DAY)
+            //if (i <= Params::LAST_TRAINING_DAY)
             {
+
                 calculate_counters(dayData, counters1);
                 DeleteSomeCounters(users, queries);
+                if (i > 20) {
+                    CalculateValue(i + 1, i + 1);
+                }
+
             }
-            for (const auto& personData : data)
+            /*for (const auto& personData : data)
             {
                 const unordered_map<size_t, Query>& sessionData = personData.second;
                 for (const auto& session : sessionData)
@@ -404,7 +417,7 @@ NewModel::NewModel()
                     frequency_query[serp.id] = frequency + 1;
 
                 }
-            }
+            }*/
         }
 
     }

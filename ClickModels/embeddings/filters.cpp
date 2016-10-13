@@ -62,6 +62,20 @@ bool Filter4(const uumap& queryUser, const uumap& userUrl, const uumap& queryRan
     return true;
 }
 
+bool Filter6(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
+{
+    bool found = false;
+    for (size_t i = 0; i < 10; ++i)
+    {
+        if(history.type[i] >= 1.5)
+        {
+            found = true;
+            break;
+        }
+    }
+    if (!found) return false;
+    return true;
+}
 bool Filter5(const uumap& queryUser, const uumap& userUrl, const uumap& queryRank, const Query& history)
 {
     bool found = false;
